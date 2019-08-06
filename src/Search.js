@@ -23,10 +23,13 @@ export class Search extends Component {
 
     filteredIndividuals() {
         const pattern = this.state.query.toLowerCase();
-        let results = this.props.individuals.filter((i) => {
-            return i.last_name.toLowerCase().match(pattern) ||
-                i.first_names.toLowerCase().match(pattern);
-        });
+        const f = !this.state.query
+            ? () => true
+            : (i) => {
+                return i.last_name.toLowerCase().match(pattern) ||
+                    i.first_names.toLowerCase().match(pattern);
+            };
+        let results = this.props.individuals.filter(f);
         let cmp = (a, b) => {
             let a_str = (a.first_names + " " + a.last_name).toLowerCase();
             let b_str = (b.first_names + " " + b.last_name).toLowerCase();
@@ -53,20 +56,18 @@ export class Search extends Component {
         }
         let searchResults = null;
         let count = this.props.individuals.length;
-        if (this.state.query) {
-            const filtered = this.filteredIndividuals();
-            searchResults = filtered.map(
-                (i) => {
-                    const name = i.first_names + " " + i.last_name + " " + lifetime(i);
-                    return (
-                    <li key={i.id}>
-                        <button onClick={()=>this.detailCallback(i.id)}>{name}</button>
-                    </li>
-                    )
-                }
-            );
-            count = filtered.length + " / " + count;
-        }
+        const filtered = this.filteredIndividuals();
+        searchResults = filtered.map(
+            (i) => {
+                const name = i.first_names + " " + i.last_name + " " + lifetime(i);
+                return (
+                <li key={i.id}>
+                    <button onClick={()=>this.detailCallback(i.id)}>{name}</button>
+                </li>
+                )
+            }
+        );
+        count = filtered.length + " / " + count;
         return (
             <div>
                 <label htmlFor="search-box">Search {count} individuals:</label>

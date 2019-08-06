@@ -1,13 +1,12 @@
 import React, {Component} from 'react';
 import {LoginBox} from './LoginBox.js';
 import {Search} from './Search.js';
-import {List} from './List.js';
 import './App.css';
 
 const screen = {
   INITIAL: 0,
   SEARCH: 1,
-  LIST: 2,
+  DETAIL: 2,
   LOGOUT: 3,
 };
 
@@ -18,7 +17,6 @@ const AUTH_TOKEN = "authToken";
 function Header(props) {
   const items = [
     { text: "Search", click: props.search, key: screen.SEARCH},
-    { text: "List", click: props.list, key: screen.LIST, },
     { text: "Logout", click: props.logout, key: undefined },
   ];
 
@@ -50,14 +48,6 @@ function Main(props) {
         />
       )
     }
-    case screen.LIST: {
-      return (
-        <List
-          individuals={props.individuals}
-          detail={props.detailCallback}
-        />
-      )
-    }
     default: {
       return null;
     }
@@ -73,6 +63,7 @@ class App extends Component {
       token: token,
       loginErrorMessage: null,
       individuals: null,
+      individualId: 0,
     };
 
     this.downloadIndividuals();
@@ -80,7 +71,6 @@ class App extends Component {
     this.logout = this.logout.bind(this);
     this.login = this.login.bind(this);
     this.searchIndividuals = this.searchIndividuals.bind(this);
-    this.listIndividuals = this.listIndividuals.bind(this);
     this.detailCallback = this.detailCallback.bind(this);
   }
 
@@ -166,16 +156,13 @@ class App extends Component {
     )
   }
 
-  listIndividuals() {
-    this.setState({screen: screen.LIST});
-  }
-
   searchIndividuals() {
     this.setState({screen: screen.SEARCH});
   }
 
-  detailCallback(individual_id) {
-    console.log("detailCallback " + individual_id);
+  detailCallback(individualId) {
+    console.log("detailCallback " + individualId);
+    this.setState({screen: screen.DETAIL, individualId: individualId});
   }
 
   render() {
@@ -187,7 +174,6 @@ class App extends Component {
         <Header
           page={this.state.screen}
           logout={this.logout}
-          list={this.listIndividuals}
           search={this.searchIndividuals}
         />
         <Main
