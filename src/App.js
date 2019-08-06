@@ -46,7 +46,7 @@ function Main(props) {
       return (
         <Search
           individuals={props.individuals}
-          detailCallback={props.detail}
+          detailCallback={props.detailCallback}
         />
       )
     }
@@ -54,7 +54,7 @@ function Main(props) {
       return (
         <List
           individuals={props.individuals}
-          detail={props.detail}
+          detail={props.detailCallback}
         />
       )
     }
@@ -182,33 +182,6 @@ class App extends Component {
     if (!this.state.token) {
       return this.loginScreen();
     }
-
-    let contents;
-    switch (this.state.screen) {
-      case screen.SEARCH: {
-        contents = (
-          <Search
-            individuals={this.state.individuals}
-            detailCallback={this.detailCallback}
-          />
-        );
-        break;
-      }
-      case screen.LIST: {
-        contents = (
-          <List
-            individuals={this.state.individuals}
-            detail={this.detailCallback}
-          />
-        );
-        break;
-      }
-      default: {
-        contents = null;
-        break;
-      }
-    }
-
     return (
       <div className="App">
         <Header
@@ -217,7 +190,11 @@ class App extends Component {
           list={this.listIndividuals}
           search={this.searchIndividuals}
         />
-        {contents}
+        <Main
+          individuals={this.state.individuals}
+          detailCallback={this.detailCallback}
+          screen={this.state.screen}
+        />
       </div>
     );
   }
