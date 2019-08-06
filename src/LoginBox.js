@@ -62,25 +62,3 @@ export class LoginBox extends Component {
     );
   }
 }
-
-export class LogoutBox extends Component {
-  constructor(props) {
-    super(props);
-    this.handleLogout = this.handleLogout.bind(this);
-  }
-
-  handleLogout(event) {
-    event.preventDefault();
-    this.props.logout();
-  }
-
-  render() {
-    return (
-      <div className="LogoutBox">
-        <form onSubmit={this.handleLogout}>
-          <input type="submit" value="Logout" />
-        </form>
-      </div>
-    );
-  }
-}
