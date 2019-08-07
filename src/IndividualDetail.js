@@ -113,7 +113,7 @@ export class IndividualDetail extends Component {
         return (
             <div>
                 <div id="name">
-                    {nameAndLifetimeOf(individual)}
+                    {individual.first_names + " "  + individual.last_name}
                 </div>
                 <div id="sex">
                     Sex: {sex}
