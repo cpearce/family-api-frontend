@@ -26,7 +26,13 @@ function Header(props) {
   const navBarItems = items.map(
     (item) => (
       <li key={"navbar-" + item.text} className="nav-item">
-        <button disabled={(props.page === item.key)} className="nav-button" onClick={item.click}>{item.text}</button>
+        <button
+          disabled={(props.page === item.key)}
+          className="nav-button"
+          onClick={item.click}
+        >
+          {item.text}
+        </button>
       </li>
     )
   );
@@ -75,6 +81,8 @@ class App extends Component {
   constructor(props) {
     super(props);
     let token = localStorage.getItem(AUTH_TOKEN);
+    console.log("Token retrieved from storage: " + token);
+
     this.state = {
       screen: screen.DOWNLOADING,
       token: token,
@@ -82,6 +90,8 @@ class App extends Component {
       individuals: null,
       families: null,
       individual: null,
+      idToIndividual: null,
+      idToFamily: null,
     };
 
     this.ensureDataDownloaded();
@@ -94,11 +104,6 @@ class App extends Component {
 
   async downloadJsonData(url) {
     console.log("Downloading " + url);
-    if (!this.state.token) {
-      // Can't download.
-      return {};
-    }
-
     const init = {
         method: 'GET',
         headers: {
@@ -116,28 +121,47 @@ class App extends Component {
     }
     console.log("Download " + url + " response status: " + response.status);
     if (!response.ok) {
-      return {};
+      throw new Error("Download failed with status: " + response.status);
     }
     return await response.json();
   }
 
   async downloadIndividuals() {
     let json = await this.downloadJsonData(INDIVIDUALS_URL);
-    this.setState({individuals: json});
+    let idToIndividual = new Map(
+      json.map((i) => [i.id, i])
+    );
+    this.setState({
+      individuals: json,
+      idToIndividual: idToIndividual
+    });
     console.log("Set individuals state to " + json.length + " individuals");
   }
 
   async downloadFamilies() {
     let json = await this.downloadJsonData(FAMILIES_URL);
-    this.setState({families: json});
+    let idToFamily = new Map(
+      json.map((f) => [f.id, f])
+    );
+    this.setState({
+      families: json,
+      idToFamily: idToFamily,
+    });
     console.log("Set families state to " + json.length + " families");
   }
 
   async ensureDataDownloaded() {
+    if (!this.state.token) {
+      // Can't download.
+      return;
+    }
     await Promise.all([this.downloadIndividuals(), this.downloadFamilies()]).then(
       ()=> {
-        console.log("Downloaded data.");
         this.setState({screen: screen.SEARCH});
+      }
+    ).catch(
+      (e)=>{
+        console.log("Caught error " + e.message);
       }
     );
   }
@@ -185,7 +209,7 @@ class App extends Component {
       cache: 'default',
     };
     let response = await fetch(url, init);
-    console.log("Response status: " + response.status);
+    console.log("Logout response status: " + response.status);
     this.setState({token: null});
   }
 
