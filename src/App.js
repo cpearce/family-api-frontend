@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {LoginBox} from './LoginBox.js';
 import {Search} from './Search.js';
+import {IndividualDetail} from './IndividualDetail.js';
 import './App.css';
 
 const screen = {
@@ -48,6 +49,14 @@ function Main(props) {
         />
       )
     }
+    case screen.DETAIL: {
+      return (
+        <IndividualDetail
+          individual={props.individual}
+          detailCallback={props.detailCallback}
+        />
+      );
+    }
     default: {
       return null;
     }
@@ -63,7 +72,7 @@ class App extends Component {
       token: token,
       loginErrorMessage: null,
       individuals: null,
-      individualId: 0,
+      individual: null,
     };
 
     this.downloadIndividuals();
@@ -160,9 +169,34 @@ class App extends Component {
     this.setState({screen: screen.SEARCH});
   }
 
-  detailCallback(individualId) {
+  async detailCallback(individualId) {
     console.log("detailCallback " + individualId);
-    this.setState({screen: screen.DETAIL, individualId: individualId});
+
+    this.setState({screen: screen.DETAIL});
+
+    if (!this.state.token) {
+      // Can't download.
+      return;
+    }
+
+    const url = backend_server + 'individuals/' + individualId + '/verbose';
+    const init = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.state.token,
+        },
+        mode: 'cors',
+        cache: 'default',
+    };
+
+    let response = await fetch(url, init);
+    console.log("Individual download response status: " + response.status);
+    let json = await response.json();
+    if (response.ok) {
+      this.setState({individual: json});
+      console.log("Set individual detail state to " + JSON.stringify(json));
+    }
   }
 
   render() {
@@ -179,6 +213,7 @@ class App extends Component {
         <Main
           individuals={this.state.individuals}
           detailCallback={this.detailCallback}
+          individual={this.state.individual}
           screen={this.state.screen}
         />
       </div>

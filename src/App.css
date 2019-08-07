@@ -31,3 +31,8 @@ body {
   margin-bottom: 0;
   padding: 0;
 }
+
+#name {
+  font-size: 150%;
+  font-weight: 150%;
+}
