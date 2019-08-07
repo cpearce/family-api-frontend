@@ -5,7 +5,7 @@ import {IndividualDetail} from './IndividualDetail.js';
 import './App.css';
 
 const screen = {
-  INITIAL: 0,
+  DOWNLOADING: 0,
   SEARCH: 1,
   DETAIL: 2,
   LOGOUT: 3,
@@ -13,6 +13,8 @@ const screen = {
 
 
 const backend_server = "http://127.0.0.1:8000/api/v1/";
+const FAMILIES_URL = backend_server + 'families/';
+const INDIVIDUALS_URL = backend_server + 'individuals/';
 const AUTH_TOKEN = "authToken";
 
 function Header(props) {
@@ -41,6 +43,12 @@ function Header(props) {
 
 function Main(props) {
   switch (props.screen) {
+    case screen.DOWNLOADING:
+      return (
+        <div>
+          Downloading data...
+        </div>
+      );
     case screen.SEARCH: {
       return (
         <Search
@@ -68,14 +76,15 @@ class App extends Component {
     super(props);
     let token = localStorage.getItem(AUTH_TOKEN);
     this.state = {
-      screen: screen.SEARCH,
+      screen: screen.DOWNLOADING,
       token: token,
       loginErrorMessage: null,
       individuals: null,
+      families: null,
       individual: null,
     };
 
-    this.downloadIndividuals();
+    this.ensureDataDownloaded();
 
     this.logout = this.logout.bind(this);
     this.login = this.login.bind(this);
@@ -83,13 +92,13 @@ class App extends Component {
     this.detailCallback = this.detailCallback.bind(this);
   }
 
-  async downloadIndividuals() {
+  async downloadJsonData(url) {
+    console.log("Downloading " + url);
     if (!this.state.token) {
       // Can't download.
-      return;
+      return {};
     }
 
-    const url = backend_server + 'individuals/';
     const init = {
         method: 'GET',
         headers: {
@@ -101,12 +110,36 @@ class App extends Component {
     };
 
     let response = await fetch(url, init);
-    console.log("Individual download response status: " + response.status);
-    let json = await response.json();
-    if (response.ok) {
-      this.setState({individuals: json});
-      console.log("Set individuals state to " + json.length + " individuals");
+    if (response.status === 401) {
+      // Unauthorized. Token may have expired.
+      this.logout();
     }
+    console.log("Download " + url + " response status: " + response.status);
+    if (!response.ok) {
+      return {};
+    }
+    return await response.json();
+  }
+
+  async downloadIndividuals() {
+    let json = await this.downloadJsonData(INDIVIDUALS_URL);
+    this.setState({individuals: json});
+    console.log("Set individuals state to " + json.length + " individuals");
+  }
+
+  async downloadFamilies() {
+    let json = await this.downloadJsonData(FAMILIES_URL);
+    this.setState({families: json});
+    console.log("Set families state to " + json.length + " families");
+  }
+
+  async ensureDataDownloaded() {
+    await Promise.all([this.downloadIndividuals(), this.downloadFamilies()]).then(
+      ()=> {
+        console.log("Downloaded data.");
+        this.setState({screen: screen.SEARCH});
+      }
+    );
   }
 
   async login(username, password) {
@@ -133,7 +166,7 @@ class App extends Component {
       this.setState({token: json.token});
       localStorage.setItem(AUTH_TOKEN, json.token);
       console.log("Set auth token to " + json.token);
-      this.downloadIndividuals();
+      this.ensureDataDownloaded();
     } else {
       this.setState({loginErrorMessage: "Login failed"});
     }

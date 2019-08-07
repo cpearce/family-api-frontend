@@ -34,7 +34,7 @@ function nameAndLifetimeOf(individual) {
 }
 
 function formatChildren(family, detailCallback) {
-    if (family.children.length == 0) {
+    if (family.children.length === 0) {
         return null;
     }
     const f = (c) => (
@@ -89,18 +89,7 @@ function formatParents(parents, detailCallback) {
 }
 
 export class IndividualDetail extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
-        if (this.props.individual === null) {
-            return (
-                <div>
-                    Awaiting download of individual's details...
-                </div>
-            );
-        }
         const individual = this.props.individual.individual;
         const families = this.props.individual.families;
         const parents = this.props.individual.parents;
@@ -108,8 +97,8 @@ export class IndividualDetail extends Component {
         const birth = formatEvent(individual.birth_date, individual.birth_location);
         const death = formatEvent(individual.death_date, individual.death_location);
         const buried = formatEvent(individual.burried_date, individual.buried_location);
-        const sex = individual.sex == "M" ? "Male" :
-                    (individual.sex == "F" ? "Female" : "?");
+        const sex = individual.sex === "M" ? "Male" :
+                    (individual.sex === "F" ? "Female" : "?");
         return (
             <div>
                 <div id="name">
