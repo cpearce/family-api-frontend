@@ -27,7 +27,7 @@ function Header(props) {
     (item) => (
       <li key={"navbar-" + item.text} className="nav-item">
         <button
-          disabled={(props.page === item.key)}
+          disabled={(props.screen === item.key)}
           className="nav-button"
           onClick={item.click}
         >
@@ -48,7 +48,7 @@ function Header(props) {
 }
 
 function Main(props) {
-  switch (props.screen) {
+  switch (props.screen.id) {
     case screen.DOWNLOADING:
       return (
         <div>
@@ -68,7 +68,7 @@ function Main(props) {
         <IndividualDetail
           idToIndividual={props.idToIndividual}
           idToFamily={props.idToFamily}
-          detailIndividualId={props.detailIndividualId}
+          detailIndividualId={props.screen.individualId}
           detailCallback={props.detailCallback}
         />
       );
@@ -86,12 +86,11 @@ class App extends Component {
     console.log("Token retrieved from storage: " + token);
 
     this.state = {
-      screen: screen.DOWNLOADING,
+      screen: { id: screen.DOWNLOADING },
       token: token,
       loginErrorMessage: null,
       individuals: null,
       families: null,
-      individual: null,
       idToIndividual: null,
       idToFamily: null,
     };
@@ -159,7 +158,7 @@ class App extends Component {
     }
     await Promise.all([this.downloadIndividuals(), this.downloadFamilies()]).then(
       ()=> {
-        this.setState({screen: screen.SEARCH});
+        this.setState({screen: {id: screen.SEARCH }});
       }
     ).catch(
       (e)=>{
@@ -225,14 +224,20 @@ class App extends Component {
   }
 
   searchIndividuals() {
-    this.setState({screen: screen.SEARCH});
+    this.setState({
+      screen: {
+        id: screen.SEARCH
+      }
+    });
   }
 
   async detailCallback(individualId) {
     console.log("detailCallback " + individualId);
     this.setState({
-      detailIndividualId: individualId,
-      screen: screen.DETAIL
+      screen: {
+        id: screen.DETAIL,
+        individualId: individualId,
+      }
     });
   }
 
@@ -243,7 +248,7 @@ class App extends Component {
     return (
       <div className="App">
         <Header
-          page={this.state.screen}
+          screen={this.state.screen}
           logout={this.logout}
           search={this.searchIndividuals}
         />
@@ -251,7 +256,6 @@ class App extends Component {
           individuals={this.state.individuals}
           idToIndividual={this.state.idToIndividual}
           idToFamily={this.state.idToFamily}
-          detailIndividualId={this.state.detailIndividualId}
           detailCallback={this.detailCallback}
           screen={this.state.screen}
         />
