@@ -103,11 +103,7 @@ function parentsOf(individual, idToIndividual, idToFamily) {
     if (!individual.child_in_family) {
         return [];
     }
-    const familyId = idToFamily.get(individual.child_in_family);
-    if (!familyId) {
-        return [];
-    }
-    const family = idToFamily.get(familyId);
+    const family = idToFamily.get(individual.child_in_family);
     if (!family) {
         return [];
     }
