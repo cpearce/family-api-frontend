@@ -231,7 +231,7 @@ class App extends Component {
     });
   }
 
-  async detailCallback(individualId) {
+  detailCallback(individualId) {
     console.log("detailCallback " + individualId);
     this.setState({
       screen: {
