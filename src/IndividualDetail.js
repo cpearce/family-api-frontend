@@ -33,12 +33,12 @@ function nameAndLifetimeOf(individual) {
     return individual.first_names + " " + individual.last_name + (l ? (" - " + l) : "");
 }
 
-function formatChildren(family, detailCallback) {
-    if (family.children.length === 0) {
+function formatChildren(familyId, children, detailCallback) {
+    if (children.length === 0) {
         return null;
     }
     const f = (c) => (
-        <li key={family.id + "-" + c.id}>
+        <li key={familyId + "-" + c.id}>
             <button onClick={()=>detailCallback(c.id)}>{nameAndLifetimeOf(c)}</button>
         </li>
     );
@@ -46,22 +46,33 @@ function formatChildren(family, detailCallback) {
         <div>
             Children:
             <ul>
-                {family.children.map(f)}
+                {children.map(f)}
             </ul>
         </div>
     );
 }
 
-function formatFamilies(families, detailCallback) {
-    const f = (f) => (
+function formatFamilies(individualId, families, detailCallback, idToIndividual) {
+    const f = (f) => {
+        const partners = f.partners.filter((id) => id !== individualId)
+                                   .map((id) => idToIndividual.get(id));
+        if (partners.length !== 1) {
+            return null;
+        }
+        const spouse = partners[0];
+        const children = f.children.map(
+            (id) => idToIndividual.get(id)
+        );
+        return (
         <li key={f.id}>
             <div className="spouse">
-                Partner: <button onClick={()=>detailCallback(f.spouse.id)}>{nameAndLifetimeOf(f.spouse)}</button>
+                Partner: <button onClick={()=>detailCallback(spouse.id)}>{nameAndLifetimeOf(spouse)}</button>
             </div>
             <div>Married: {formatEvent(f.married_date, f.married_location)}</div>
-            {formatChildren(f, detailCallback)}
+            {formatChildren(f.id, children, detailCallback)}
         </li>
-    );
+        );
+        }
     return (
         <div>
             Families:
@@ -88,11 +99,33 @@ function formatParents(parents, detailCallback) {
     );
 }
 
+function parentsOf(individual, idToIndividual, idToFamily) {
+    if (!individual.child_in_family) {
+        return [];
+    }
+    const familyId = idToFamily.get(individual.child_in_family);
+    if (!familyId) {
+        return [];
+    }
+    const family = idToFamily.get(familyId);
+    if (!family) {
+        return [];
+    }
+    return family.partners.map(
+        (id) => idToIndividual.get(id)
+    );
+}
+
 export class IndividualDetail extends Component {
     render() {
-        const individual = this.props.individual.individual;
-        const families = this.props.individual.families;
-        const parents = this.props.individual.parents;
+        const idToIndividual = this.props.idToIndividual;
+        const idToFamily = this.props.idToFamily;
+
+        const individual = idToIndividual.get(this.props.detailIndividualId);
+        const families = individual.partner_in_families.map(
+            (id) => idToFamily.get(id)
+        );
+        const parents = parentsOf(individual, idToIndividual, idToFamily)
 
         const birth = formatEvent(individual.birth_date, individual.birth_location);
         const death = formatEvent(individual.death_date, individual.death_location);
@@ -123,7 +156,7 @@ export class IndividualDetail extends Component {
                     {formatParents(parents, this.props.detailCallback)}
                 </div>
                 <div id="families">
-                    {formatFamilies(families, this.props.detailCallback)}
+                    {formatFamilies(this.props.detailIndividualId, families, this.props.detailCallback, idToIndividual)}
                 </div>
             </div>
         );

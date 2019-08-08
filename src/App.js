@@ -66,7 +66,9 @@ function Main(props) {
     case screen.DETAIL: {
       return (
         <IndividualDetail
-          individual={props.individual}
+          idToIndividual={props.idToIndividual}
+          idToFamily={props.idToFamily}
+          detailIndividualId={props.detailIndividualId}
           detailCallback={props.detailCallback}
         />
       );
@@ -228,32 +230,10 @@ class App extends Component {
 
   async detailCallback(individualId) {
     console.log("detailCallback " + individualId);
-
-    this.setState({screen: screen.DETAIL});
-
-    if (!this.state.token) {
-      // Can't download.
-      return;
-    }
-
-    const url = backend_server + 'individuals/' + individualId + '/verbose';
-    const init = {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.state.token,
-        },
-        mode: 'cors',
-        cache: 'default',
-    };
-
-    let response = await fetch(url, init);
-    console.log("Individual download response status: " + response.status);
-    let json = await response.json();
-    if (response.ok) {
-      this.setState({individual: json});
-      console.log("Set individual detail state to " + JSON.stringify(json));
-    }
+    this.setState({
+      detailIndividualId: individualId,
+      screen: screen.DETAIL
+    });
   }
 
   render() {
@@ -269,8 +249,10 @@ class App extends Component {
         />
         <Main
           individuals={this.state.individuals}
+          idToIndividual={this.state.idToIndividual}
+          idToFamily={this.state.idToFamily}
+          detailIndividualId={this.state.detailIndividualId}
           detailCallback={this.detailCallback}
-          individual={this.state.individual}
           screen={this.state.screen}
         />
       </div>
