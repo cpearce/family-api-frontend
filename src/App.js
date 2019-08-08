@@ -68,7 +68,7 @@ function Main(props) {
         <IndividualDetail
           idToIndividual={props.idToIndividual}
           idToFamily={props.idToFamily}
-          detailIndividualId={props.screen.individualId}
+          individualId={props.screen.individualId}
           detailCallback={props.detailCallback}
         />
       );

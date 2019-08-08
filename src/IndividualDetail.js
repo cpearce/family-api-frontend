@@ -117,7 +117,7 @@ export class IndividualDetail extends Component {
         const idToIndividual = this.props.idToIndividual;
         const idToFamily = this.props.idToFamily;
 
-        const individual = idToIndividual.get(this.props.detailIndividualId);
+        const individual = idToIndividual.get(this.props.individualId);
         const families = individual.partner_in_families.map(
             (id) => idToFamily.get(id)
         );
@@ -152,7 +152,7 @@ export class IndividualDetail extends Component {
                     {formatParents(parents, this.props.detailCallback)}
                 </div>
                 <div id="families">
-                    {formatFamilies(this.props.detailIndividualId, families, this.props.detailCallback, idToIndividual)}
+                    {formatFamilies(this.props.individualId, families, this.props.detailCallback, idToIndividual)}
                 </div>
             </div>
         );
