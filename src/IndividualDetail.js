@@ -154,6 +154,11 @@ export class IndividualDetail extends Component {
                 <div id="families">
                     {formatFamilies(this.props.individualId, families, this.props.detailCallback, idToIndividual)}
                 </div>
+                <div>
+                    <button onClick={() => this.props.editCallback(individual.id)}>
+                        Edit
+                    </button>
+                </div>
             </div>
         );
     }

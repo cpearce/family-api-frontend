@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {LoginBox} from './LoginBox.js';
 import {Search} from './Search.js';
 import {IndividualDetail} from './IndividualDetail.js';
+import {EditIndividual} from './EditIndividual.js';
 import './App.css';
 
 const screen = {
@@ -9,6 +10,7 @@ const screen = {
   SEARCH: 1,
   DETAIL: 2,
   LOGOUT: 3,
+  EDIT: 4,
 };
 
 
@@ -70,6 +72,19 @@ function Main(props) {
           idToFamily={props.idToFamily}
           individualId={props.screen.individualId}
           detailCallback={props.detailCallback}
+          editCallback={props.editCallback}
+        />
+      );
+    }
+    case screen.EDIT: {
+      return (
+        <EditIndividual
+          idToIndividual={props.idToIndividual}
+          idToFamily={props.idToFamily}
+          individualId={props.screen.individualId}
+          detailCallback={props.detailCallback}
+          editCallback={props.editCallback}
+          saveCallback={props.saveCallback}
         />
       );
     }
@@ -101,6 +116,8 @@ class App extends Component {
     this.login = this.login.bind(this);
     this.searchIndividuals = this.searchIndividuals.bind(this);
     this.detailCallback = this.detailCallback.bind(this);
+    this.editCallback = this.editCallback.bind(this);
+    this.saveCallback = this.saveCallback.bind(this);
   }
 
   async downloadJsonData(url) {
@@ -182,7 +199,6 @@ class App extends Component {
           password: password,
         }),
     };
-
     let response = await fetch(url, init);
     console.log("Response status: " + response.status);
     let json = await response.json();
@@ -214,6 +230,55 @@ class App extends Component {
     this.setState({token: null});
   }
 
+  async saveCallback(individual) {
+    let method = individual.id ? "PATCH" : "PUT";
+    let suffix = individual.id ? (individual.id + "/") : "";
+    const url = backend_server + "individuals/" + suffix;
+    const fields = [
+      'id',
+      'first_names',
+      'last_name',
+      'sex',
+      'birth_date',
+      'birth_location',
+      'death_date',
+      'death_location',
+      'buried_date',
+      'buried_location',
+      'occupation',
+    ];
+    let body = {};
+    for (const field of fields) {
+      if (individual[field]) {
+        body[field] = individual[field];
+      }
+    }
+    const init = {
+      method: method,
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.state.token,
+      },
+      mode: 'cors',
+      cache: 'default',
+      body: JSON.stringify(body),
+    };
+    let response = await fetch(url, init);
+    if (response.ok) {
+      // Update the individual in our data model, to match what should
+      // be on the server.
+      this.setState((state, props) => {
+        let i = state.idToIndividual.get(individual.id);
+        for (const field in body) {
+          i[field] = body[field];
+        }
+        return state;
+      });
+    } else {
+      console.log(method + " failed! " + response.status);
+    }
+  }
+
   loginScreen() {
     return (
       <LoginBox
@@ -241,6 +306,16 @@ class App extends Component {
     });
   }
 
+  editCallback(individualId) {
+    console.log("edit " + individualId);
+    this.setState({
+      screen: {
+        id: screen.EDIT,
+        individualId: individualId,
+      }
+    });
+  }
+
   render() {
     if (!this.state.token) {
       return this.loginScreen();
@@ -257,6 +332,8 @@ class App extends Component {
           idToIndividual={this.state.idToIndividual}
           idToFamily={this.state.idToFamily}
           detailCallback={this.detailCallback}
+          editCallback={this.editCallback}
+          saveCallback={this.saveCallback}
           screen={this.state.screen}
         />
       </div>
