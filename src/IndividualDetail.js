@@ -30,7 +30,8 @@ function formatEvent(date, location) {
 
 function nameAndLifetimeOf(individual) {
     const l = lifetime(individual);
-    return individual.first_names + " " + individual.last_name + (l ? (" - " + l) : "");
+    return individual.first_names + " " +
+        individual.last_name + (l ? (" - " + l) : "");
 }
 
 function formatChildren(familyId, children, detailCallback) {
@@ -39,7 +40,9 @@ function formatChildren(familyId, children, detailCallback) {
     }
     const f = (c) => (
         <li key={familyId + "-" + c.id}>
-            <button onClick={()=>detailCallback(c.id)}>{nameAndLifetimeOf(c)}</button>
+            <button onClick={() => detailCallback(c.id)}>
+                {nameAndLifetimeOf(c)}
+            </button>
         </li>
     );
     return (
@@ -55,7 +58,7 @@ function formatChildren(familyId, children, detailCallback) {
 function formatFamilies(individualId, families, detailCallback, idToIndividual) {
     const f = (f) => {
         const partners = f.partners.filter((id) => id !== individualId)
-                                   .map((id) => idToIndividual.get(id));
+            .map((id) => idToIndividual.get(id));
         if (partners.length !== 1) {
             return null;
         }
@@ -64,15 +67,18 @@ function formatFamilies(individualId, families, detailCallback, idToIndividual) 
             (id) => idToIndividual.get(id)
         );
         return (
-        <li key={f.id}>
-            <div className="spouse">
-                Partner: <button onClick={()=>detailCallback(spouse.id)}>{nameAndLifetimeOf(spouse)}</button>
-            </div>
-            <div>Married: {formatEvent(f.married_date, f.married_location)}</div>
-            {formatChildren(f.id, children, detailCallback)}
-        </li>
+            <li key={f.id}>
+                <div className="spouse">
+                    Partner:
+                    <button onClick={() => detailCallback(spouse.id)}>
+                        {nameAndLifetimeOf(spouse)}
+                    </button>
+                </div>
+                <div>Married: {formatEvent(f.married_date, f.married_location)}</div>
+                {formatChildren(f.id, children, detailCallback)}
+            </li>
         );
-        }
+    }
     return (
         <div>
             Families:
@@ -86,7 +92,9 @@ function formatFamilies(individualId, families, detailCallback, idToIndividual) 
 function formatParents(parents, detailCallback) {
     const f = (p) => (
         <li key={"parent-" + p.id}>
-            <button onClick={()=>detailCallback(p.id)}>{nameAndLifetimeOf(p)}</button>
+            <button onClick={() => detailCallback(p.id)}>{
+                nameAndLifetimeOf(p)}
+            </button>
         </li>
     );
     return (
@@ -127,11 +135,11 @@ export class IndividualDetail extends Component {
         const death = formatEvent(individual.death_date, individual.death_location);
         const buried = formatEvent(individual.burried_date, individual.buried_location);
         const sex = individual.sex === "M" ? "Male" :
-                    (individual.sex === "F" ? "Female" : "?");
+            (individual.sex === "F" ? "Female" : "?");
         return (
             <div>
                 <div id="name">
-                    {individual.first_names + " "  + individual.last_name}
+                    {individual.first_names + " " + individual.last_name}
                 </div>
                 <div id="sex">
                     Sex: {sex}
@@ -152,7 +160,11 @@ export class IndividualDetail extends Component {
                     {formatParents(parents, this.props.callbacks.detail)}
                 </div>
                 <div id="families">
-                    {formatFamilies(this.props.individualId, families, this.props.callbacks.detail, idToIndividual)}
+                    {formatFamilies(
+                        this.props.individualId,
+                        families,
+                        this.props.callbacks.detail,
+                        idToIndividual)}
                 </div>
                 <div>
                     <button onClick={() => this.props.callbacks.edit(individual.id)}>

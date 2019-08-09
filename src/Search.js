@@ -54,9 +54,9 @@ export class Search extends Component {
             (i) => {
                 const name = i.first_names + " " + i.last_name + " " + lifetime(i);
                 return (
-                <li key={i.id}>
-                    <button onClick={()=>this.detailCallback(i.id)}>{name}</button>
-                </li>
+                    <li key={i.id}>
+                        <button onClick={() => this.detailCallback(i.id)}>{name}</button>
+                    </li>
                 )
             }
         );
