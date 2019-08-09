@@ -16,7 +16,7 @@ export class EditIndividual extends Component {
     }
 
     initialState() {
-        const idToIndividual = this.props.idToIndividual;
+        const idToIndividual = this.props.database.idToIndividual;
         const individual = idToIndividual.get(this.props.individualId);
         return {
             id: individual.id || "",
@@ -34,7 +34,7 @@ export class EditIndividual extends Component {
     }
 
     save() {
-        this.props.saveCallback(this.state)
+        this.props.callbacks.save(this.state);
     }
 
     revert() {

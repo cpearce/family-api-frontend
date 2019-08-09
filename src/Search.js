@@ -17,7 +17,7 @@ export class Search extends Component {
         this.state = {
             query: "",
         };
-        this.detailCallback = props.detailCallback;
+        this.detailCallback = props.callbacks.detail;
         this.handleQueryChange = this.handleQueryChange.bind(this);
     }
 
@@ -29,7 +29,7 @@ export class Search extends Component {
                 return i.last_name.toLowerCase().match(pattern) ||
                     i.first_names.toLowerCase().match(pattern);
             };
-        let results = this.props.individuals.filter(f);
+        let results = this.props.database.individuals.filter(f);
         let cmp = (a, b) => {
             let a_str = (a.first_names + " " + a.last_name).toLowerCase();
             let b_str = (b.first_names + " " + b.last_name).toLowerCase();
@@ -47,15 +47,8 @@ export class Search extends Component {
     }
 
     render() {
-        if (this.props.individuals === null) {
-            return (
-                <div>
-                    Awaiting download of individuals...
-                </div>
-            );
-        }
         let searchResults = null;
-        let count = this.props.individuals.length;
+        let count = this.props.database.individuals.length;
         const filtered = this.filteredIndividuals();
         searchResults = filtered.map(
             (i) => {

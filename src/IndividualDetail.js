@@ -114,8 +114,8 @@ function parentsOf(individual, idToIndividual, idToFamily) {
 
 export class IndividualDetail extends Component {
     render() {
-        const idToIndividual = this.props.idToIndividual;
-        const idToFamily = this.props.idToFamily;
+        const idToIndividual = this.props.database.idToIndividual;
+        const idToFamily = this.props.database.idToFamily;
 
         const individual = idToIndividual.get(this.props.individualId);
         const families = individual.partner_in_families.map(
@@ -149,13 +149,13 @@ export class IndividualDetail extends Component {
                     Occupation: {individual.occupation}
                 </div>
                 <div id="parents">
-                    {formatParents(parents, this.props.detailCallback)}
+                    {formatParents(parents, this.props.callbacks.detail)}
                 </div>
                 <div id="families">
-                    {formatFamilies(this.props.individualId, families, this.props.detailCallback, idToIndividual)}
+                    {formatFamilies(this.props.individualId, families, this.props.callbacks.detail, idToIndividual)}
                 </div>
                 <div>
-                    <button onClick={() => this.props.editCallback(individual.id)}>
+                    <button onClick={() => this.props.callbacks.edit(individual.id)}>
                         Edit
                     </button>
                 </div>

@@ -21,8 +21,8 @@ const AUTH_TOKEN = "authToken";
 
 function Header(props) {
   const items = [
-    { text: "Search", click: props.search, key: screen.SEARCH},
-    { text: "Logout", click: props.logout, key: undefined },
+    { text: "Search", click: props.callbacks.search, key: screen.SEARCH},
+    { text: "Logout", click: props.callbacks.logout, key: undefined },
   ];
 
   const navBarItems = items.map(
@@ -60,31 +60,26 @@ function Main(props) {
     case screen.SEARCH: {
       return (
         <Search
-          individuals={props.individuals}
-          detailCallback={props.detailCallback}
+          database={props.database}
+          callbacks={props.callbacks}
         />
       )
     }
     case screen.DETAIL: {
       return (
         <IndividualDetail
-          idToIndividual={props.idToIndividual}
-          idToFamily={props.idToFamily}
           individualId={props.screen.individualId}
-          detailCallback={props.detailCallback}
-          editCallback={props.editCallback}
+          database={props.database}
+          callbacks={props.callbacks}
         />
       );
     }
     case screen.EDIT: {
       return (
         <EditIndividual
-          idToIndividual={props.idToIndividual}
-          idToFamily={props.idToFamily}
           individualId={props.screen.individualId}
-          detailCallback={props.detailCallback}
-          editCallback={props.editCallback}
-          saveCallback={props.saveCallback}
+          database={props.database}
+          callbacks={props.callbacks}
         />
       );
     }
@@ -101,23 +96,29 @@ class App extends Component {
     console.log("Token retrieved from storage: " + token);
 
     this.state = {
-      screen: { id: screen.DOWNLOADING },
+      screen: {
+        id: screen.DOWNLOADING
+      },
       token: token,
       loginErrorMessage: null,
-      individuals: null,
-      families: null,
-      idToIndividual: null,
-      idToFamily: null,
+      database: {
+        individuals: null,
+        families: null,
+        idToIndividual: null,
+        idToFamily: null,
+      },
     };
 
     this.ensureDataDownloaded();
 
-    this.logout = this.logout.bind(this);
-    this.login = this.login.bind(this);
-    this.searchIndividuals = this.searchIndividuals.bind(this);
-    this.detailCallback = this.detailCallback.bind(this);
-    this.editCallback = this.editCallback.bind(this);
-    this.saveCallback = this.saveCallback.bind(this);
+    this.callbacks = {
+      logout: this.logout.bind(this),
+      login: this.login.bind(this),
+      search: this.searchIndividuals.bind(this),
+      detail: this.detailCallback.bind(this),
+      edit: this.editCallback.bind(this),
+      save: this.saveCallback.bind(this),
+    };
   }
 
   async downloadJsonData(url) {
@@ -144,38 +145,47 @@ class App extends Component {
     return await response.json();
   }
 
-  async downloadIndividuals() {
-    let json = await this.downloadJsonData(INDIVIDUALS_URL);
-    let idToIndividual = new Map(
-      json.map((i) => [i.id, i])
-    );
-    this.setState({
-      individuals: json,
-      idToIndividual: idToIndividual
-    });
-    console.log("Set individuals state to " + json.length + " individuals");
-  }
-
-  async downloadFamilies() {
-    let json = await this.downloadJsonData(FAMILIES_URL);
-    let idToFamily = new Map(
-      json.map((f) => [f.id, f])
-    );
-    this.setState({
-      families: json,
-      idToFamily: idToFamily,
-    });
-    console.log("Set families state to " + json.length + " families");
-  }
-
   async ensureDataDownloaded() {
     if (!this.state.token) {
       // Can't download.
       return;
     }
-    await Promise.all([this.downloadIndividuals(), this.downloadFamilies()]).then(
-      ()=> {
-        this.setState({screen: {id: screen.SEARCH }});
+
+    let individuals = [];
+    let families = [];
+
+    await Promise.all([
+      new Promise(async (resolve, reject) => {
+        individuals = await this.downloadJsonData(INDIVIDUALS_URL);
+        console.log("Downloaded " + individuals.length + " individuals");
+        resolve();
+      }),
+      new Promise(async (resolve, reject) => {
+        families = await this.downloadJsonData(FAMILIES_URL);
+        console.log("Downloaded " + families.length + " families");
+        resolve();
+      }),
+    ]).then(
+      () => {
+        let idToIndividual = new Map(
+          individuals.map((i) => [i.id, i])
+        );
+        let idToFamily = new Map(
+          families.map((f) => [f.id, f])
+        );
+        this.setState({
+          screen: {
+            id: screen.SEARCH
+          },
+          database: {
+            individuals: individuals,
+            families: families,
+            idToIndividual: idToIndividual,
+            idToFamily: idToFamily,
+          },
+        });
+        console.log("Set individuals state to " + individuals.length + " individuals");
+        console.log("Set families state to " + families.length + " families");
       }
     ).catch(
       (e)=>{
@@ -283,7 +293,7 @@ class App extends Component {
     return (
       <LoginBox
         message={this.state.loginErrorMessage}
-        login={this.login}
+        login={this.callbacks.login}
       />
     )
   }
@@ -324,16 +334,11 @@ class App extends Component {
       <div className="App">
         <Header
           screen={this.state.screen}
-          logout={this.logout}
-          search={this.searchIndividuals}
+          callbacks={this.callbacks}
         />
         <Main
-          individuals={this.state.individuals}
-          idToIndividual={this.state.idToIndividual}
-          idToFamily={this.state.idToFamily}
-          detailCallback={this.detailCallback}
-          editCallback={this.editCallback}
-          saveCallback={this.saveCallback}
+          database={this.state.database}
+          callbacks={this.callbacks}
           screen={this.state.screen}
         />
       </div>
