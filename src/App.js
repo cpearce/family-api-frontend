@@ -15,7 +15,7 @@ const screen = {
 };
 
 function Header(props) {
-    const items = [
+    const items = props.screen.id === screen.LOGIN ? [] : [
         { text: "Search", click: props.callbacks.search, key: screen.SEARCH },
         { text: "Logout", click: props.callbacks.logout, key: undefined },
     ];
@@ -24,7 +24,7 @@ function Header(props) {
         (item) => (
             <li key={"navbar-" + item.text} className="nav-item">
                 <button
-                    disabled={(props.screen === item.key)}
+                    disabled={(props.screen.id === item.key)}
                     className="nav-button"
                     onClick={item.click}
                 >
@@ -46,11 +46,18 @@ function Header(props) {
 
 function Main(props) {
     switch (props.screen.id) {
+        case screen.LOGIN:
+            return (
+                <LoginBox
+                    message={props.screen.message}
+                    login={props.callbacks.login}
+                />
+            );
         case screen.DOWNLOADING:
             return (
                 <div>
                     Downloading data...
-        </div>
+                </div>
             );
         case screen.SEARCH: {
             return (
@@ -230,9 +237,6 @@ class App extends Component {
     }
 
     render() {
-        if (this.state.screen.id === screen.LOGIN) {
-            return this.loginScreen();
-        }
         return (
             <div className="App">
                 <Header
