@@ -1,23 +1,18 @@
-import React, { Component } from 'react';
 import { LoginBox } from './LoginBox.js';
+import React, { Component } from 'react';
 import { Search } from './Search.js';
 import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
+import { ServerConnection } from './ServerConnection.js';
 import './App.css';
 
 const screen = {
-    DOWNLOADING: 0,
-    SEARCH: 1,
-    DETAIL: 2,
-    LOGOUT: 3,
+    LOGIN: 0,
+    DOWNLOADING: 1,
+    SEARCH: 2,
+    DETAIL: 3,
     EDIT: 4,
 };
-
-
-const backend_server = "http://127.0.0.1:8000/api/v1/";
-const FAMILIES_URL = backend_server + 'families/';
-const INDIVIDUALS_URL = backend_server + 'individuals/';
-const AUTH_TOKEN = "authToken";
 
 function Header(props) {
     const items = [
@@ -89,18 +84,22 @@ function Main(props) {
     }
 }
 
+function listToMap(list) {
+    return new Map(
+        list.map((i) => [i.id, i])
+    );
+}
+
 class App extends Component {
     constructor(props) {
         super(props);
-        let token = localStorage.getItem(AUTH_TOKEN);
-        console.log("Token retrieved from storage: " + token);
+
+        this.server = new ServerConnection();
 
         this.state = {
             screen: {
-                id: screen.DOWNLOADING
+                id: screen.LOGIN
             },
-            token: token,
-            loginErrorMessage: null,
             database: {
                 individuals: null,
                 families: null,
@@ -108,8 +107,6 @@ class App extends Component {
                 idToFamily: null,
             },
         };
-
-        this.ensureDataDownloaded();
 
         this.callbacks = {
             logout: this.logout.bind(this),
@@ -119,180 +116,86 @@ class App extends Component {
             edit: this.editCallback.bind(this),
             save: this.saveCallback.bind(this),
         };
+
+        // TODO: Poll server for user's priveleges, and if we're
+        // authenticated, download data.
     }
 
-    async downloadJsonData(url) {
-        console.log("Downloading " + url);
-        const init = {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Token ' + this.state.token,
+    async setData(data) {
+        this.setState({
+            screen: {
+                id: screen.SEARCH
             },
-            mode: 'cors',
-            cache: 'default',
-        };
-
-        let response = await fetch(url, init);
-        if (response.status === 401) {
-            // Unauthorized. Token may have expired.
-            this.logout();
-        }
-        console.log("Download " + url + " response status: " + response.status);
-        if (!response.ok) {
-            throw new Error("Download failed with status: " + response.status);
-        }
-        return await response.json();
+            database: {
+                individuals: data.individuals,
+                families: data.families,
+                idToIndividual: listToMap(data.individuals),
+                idToFamily: listToMap(data.families),
+            },
+        });
     }
 
-    async ensureDataDownloaded() {
-        if (!this.state.token) {
-            // Can't download.
-            return;
-        }
-
-        let individuals = [];
-        let families = [];
-
-        await Promise.all([
-            new Promise(async (resolve, reject) => {
-                individuals = await this.downloadJsonData(INDIVIDUALS_URL);
-                console.log("Downloaded " + individuals.length + " individuals");
-                resolve();
-            }),
-            new Promise(async (resolve, reject) => {
-                families = await this.downloadJsonData(FAMILIES_URL);
-                console.log("Downloaded " + families.length + " families");
-                resolve();
-            }),
-        ]).then(
-            () => {
-                let idToIndividual = new Map(
-                    individuals.map((i) => [i.id, i])
-                );
-                let idToFamily = new Map(
-                    families.map((f) => [f.id, f])
-                );
-                this.setState({
-                    screen: {
-                        id: screen.SEARCH
-                    },
-                    database: {
-                        individuals: individuals,
-                        families: families,
-                        idToIndividual: idToIndividual,
-                        idToFamily: idToFamily,
-                    },
-                });
-                console.log("Set individuals state to " + individuals.length + " individuals");
-                console.log("Set families state to " + families.length + " families");
+    error(message) {
+        console.log("error: " + message);
+        this.setState({
+            screen: {
+                id: screen.LOGIN,
+                message: message,
             }
-        ).catch(
-            (e) => {
-                console.log("Caught error " + e.message);
-            }
-        );
+        });
     }
 
     async login(username, password) {
         console.log("login u:" + username + " p:" + password);
-        const url = backend_server + 'login/';
-        const init = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            mode: 'cors',
-            cache: 'default',
-            body: JSON.stringify({
-                username: username,
-                password: password,
-            }),
-        };
-        let response = await fetch(url, init);
-        console.log("Response status: " + response.status);
-        let json = await response.json();
-        console.log(json);
-        if (response.ok) {
-            this.setState({ token: json.token });
-            localStorage.setItem(AUTH_TOKEN, json.token);
-            console.log("Set auth token to " + json.token);
-            this.ensureDataDownloaded();
-        } else {
-            this.setState({ loginErrorMessage: "Login failed" });
+        try {
+            await this.server.login(username, password);
+            this.setState({
+                screen: {
+                    id: screen.DOWNLOADING
+                }
+            });
+            this.setData(await this.server.ensureDataDownloaded());
+            await this.callbacks.search();
+        } catch (e) {
+            this.error("Login Failed: " + e.message);
         }
     }
 
     async logout() {
         console.log("logout");
-        const url = backend_server + "logout/";
-        const init = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Token ' + this.state.token,
-            },
-            mode: 'cors',
-            cache: 'default',
-        };
-        let response = await fetch(url, init);
-        console.log("Logout response status: " + response.status);
-        this.setState({ token: null });
+        try {
+            await this.server.logout();
+            this.setState({
+                screen: {
+                    id: screen.LOGIN
+                }
+            });
+        } catch (e) {
+            this.error(e.message);
+        }
     }
 
     async saveCallback(individual) {
-        let method = individual.id ? "PATCH" : "PUT";
-        let suffix = individual.id ? (individual.id + "/") : "";
-        const url = backend_server + "individuals/" + suffix;
-        const fields = [
-            'id',
-            'first_names',
-            'last_name',
-            'sex',
-            'birth_date',
-            'birth_location',
-            'death_date',
-            'death_location',
-            'buried_date',
-            'buried_location',
-            'occupation',
-        ];
-        let body = {};
-        for (const field of fields) {
-            if (individual[field]) {
-                body[field] = individual[field];
-            }
-        }
-        const init = {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Token ' + this.state.token,
-            },
-            mode: 'cors',
-            cache: 'default',
-            body: JSON.stringify(body),
-        };
-        let response = await fetch(url, init);
-        if (response.ok) {
-            // Update the individual in our data model, to match what should
-            // be on the server.
-            this.setState((state, props) => {
-                let i = state.idToIndividual.get(individual.id);
-                for (const field in body) {
-                    i[field] = body[field];
+        try {
+            this.server.saveIndividual(individual);
+
+            // Re-pull all the data, so we're all up to date.
+            this.setState({
+                screen: {
+                    id: screen.DOWNLOADING
                 }
-                return state;
             });
-        } else {
-            console.log(method + " failed! " + response.status);
+            this.setData(await this.server.ensureDataDownloaded());
+
+        } catch (e) {
+            this.error(e.message);
         }
     }
 
     loginScreen() {
         return (
             <LoginBox
-                message={this.state.loginErrorMessage}
+                message={this.state.screen.message}
                 login={this.callbacks.login}
             />
         )
@@ -327,7 +230,7 @@ class App extends Component {
     }
 
     render() {
-        if (!this.state.token) {
+        if (this.state.screen.id === screen.LOGIN) {
             return this.loginScreen();
         }
         return (
