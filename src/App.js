@@ -64,6 +64,12 @@ class App extends Component {
             save: this.saveCallback.bind(this),
         };
 
+        window.addEventListener("popstate", ((e) => {
+            this.setState({
+                path: window.location.pathname
+            });
+        }).bind(this));
+
         // TODO: Poll server for user's priveleges, and if we're
         // authenticated, download data.
         // TODO: This is confusing, as if we have a token, we actually
