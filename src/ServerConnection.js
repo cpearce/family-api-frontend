@@ -127,4 +127,30 @@ export class ServerConnection {
         return await response.json();
     }
 
+    async checkAccount() {
+        if (!this.token) {
+            throw new Error("No access token");
+        }
+        const url = backend_server + "account/";
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+        let response = await fetch(url, init);
+        console.log("Check account response status: " + response.status);
+        if (response.status === 401) {
+            this.token = null;
+            throw new Error("Token expired");
+        }
+        if (!response.ok) {
+            throw new Error("Request failed: " + await response.text());
+        }
+        return await response.json();
+    }
+
 }

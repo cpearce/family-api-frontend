@@ -53,6 +53,7 @@ class App extends Component {
         this.state = {
             path: window.location.pathname,
             database: null,
+            canEdit: null,
         };
 
         this.callbacks = {
@@ -68,20 +69,37 @@ class App extends Component {
             this.setState({
                 path: window.location.pathname
             });
-        }).bind(this));
+        }));
 
-        // TODO: Poll server for user's priveleges, and if we're
-        // authenticated, download data.
-        // TODO: This is confusing, as if we have a token, we actually
-        // download the data, but still show the login screen.
-        this.server.ensureDataDownloaded().then(
-            this.setData.bind(this)
-        ).catch(
-            () => console.log("Failed to download initial data")
-        );
+        // If we have a stored access token, test it, and download
+        // data. If we don't, or the token has expired, this will
+        // cause us to show a login page.
+        // Note: this is async, but we don't await its completion.
+        this.connect();
     }
 
-    async setData(data) {
+    async connect() {
+        console.log("App.connect()");
+        try {
+            let account = await this.server.checkAccount();
+            // Our stored token is still valid. Show the individuals list.
+            console.log("Can edit: " + account.can_edit);
+            this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
+        } catch (e) {
+            // Stored token must have not worked. We should show a login page.
+            console.log("Initial connect failed. Error=" + e.message);
+            this.navigate("Family Tree", "/login");
+            return;
+        }
+        // Connected. Try to download data. This is fatal if it fails.
+        try {
+            this.setData(await this.server.ensureDataDownloaded());
+        } catch (e) {
+            this.error("Failed to download data.");
+        }
+    }
+
+    setData(data) {
         this.setState({
             database: {
                 individuals: data.individuals,
@@ -104,12 +122,21 @@ class App extends Component {
 
     async login(username, password) {
         console.log("login u:" + username + " p:" + password);
+        this.setState({
+            loginInProgress: true,
+        });
         try {
             await this.server.login(username, password);
-            this.navigate("Individuals", "/individuals");
+            let account = await this.server.checkAccount();
+            console.log("Can edit: " + account.can_edit);
+            this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
             this.setData(await this.server.ensureDataDownloaded());
         } catch (e) {
             this.error("Login Failed: " + e.message);
+        } finally {
+            this.setState({
+                loginInProgress: false,
+            });
         }
     }
 
@@ -134,7 +161,7 @@ class App extends Component {
                     individuals.push(updatedIndividual);
                 } else {
                     for (let i = 0; i < individuals.length; i++) {
-                        if (individuals[i].id == updatedIndividual.id) {
+                        if (individuals[i].id === updatedIndividual.id) {
                             individuals[i] = updatedIndividual;
                         }
                     }
@@ -161,9 +188,12 @@ class App extends Component {
         this.navigate("Edit Individual", "/individuals/" + individualId + "/edit");
     }
 
-    navigate(title, path) {
+    navigate(title, path, otherState={}) {
         window.history.pushState({}, title, path);
-        this.setState({path: path});
+        this.setState({
+            ...otherState,
+            path: path
+        });
     }
 
     render() {
@@ -187,6 +217,11 @@ class App extends Component {
 
         // URL: / or /login
         if (this.state.path === "/" || this.state.path === "/login") {
+            if (this.state.loginInProgress) {
+                return (
+                    <div>Logging in...</div>
+                );
+            }
             return (
                 <div>
                     {header}
