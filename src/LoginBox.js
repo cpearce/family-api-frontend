@@ -1,14 +1,5 @@
 import React, { Component } from 'react';
 
-function ShowErrorMessage(props) {
-    if (props.message) {
-        return (
-            <div>{props.message}</div>
-        );
-    }
-    return null;
-}
-
 export class LoginBox extends Component {
     constructor(props) {
         super(props);
@@ -34,7 +25,6 @@ export class LoginBox extends Component {
     render() {
         return (
             <div>
-                <ShowErrorMessage message={this.props.message} />
                 <form className="LoginBox" onSubmit={this.handleLogin}>
                     <label>
                         Username:
