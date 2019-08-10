@@ -133,7 +133,7 @@ export class IndividualDetail extends Component {
 
         const birth = formatEvent(individual.birth_date, individual.birth_location);
         const death = formatEvent(individual.death_date, individual.death_location);
-        const buried = formatEvent(individual.burried_date, individual.buried_location);
+        const buried = formatEvent(individual.buried_date, individual.buried_location);
         const sex = individual.sex === "M" ? "Male" :
             (individual.sex === "F" ? "Female" : "?");
         return (
