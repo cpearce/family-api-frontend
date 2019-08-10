@@ -110,25 +110,6 @@ export class ServerConnection {
         let method = individual.id ? "PATCH" : "PUT";
         let suffix = individual.id ? (individual.id + "/") : "";
         const url = backend_server + "individuals/" + suffix;
-        const fields = [
-            'id',
-            'first_names',
-            'last_name',
-            'sex',
-            'birth_date',
-            'birth_location',
-            'death_date',
-            'death_location',
-            'buried_date',
-            'buried_location',
-            'occupation',
-        ];
-        let body = {};
-        for (const field of fields) {
-            if (individual[field]) {
-                body[field] = individual[field];
-            }
-        }
         const init = {
             method: method,
             headers: {
@@ -137,7 +118,7 @@ export class ServerConnection {
             },
             mode: 'cors',
             cache: 'default',
-            body: JSON.stringify(body),
+            body: JSON.stringify(individual),
         };
         let response = await fetch(url, init);
         if (!response.ok) {

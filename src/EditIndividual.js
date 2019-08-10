@@ -34,7 +34,30 @@ export class EditIndividual extends Component {
     }
 
     save() {
-        this.props.callbacks.save(this.state);
+        // Make a copy of individual's data, with fields in a format
+        // suitable for sending to server.
+        const stringFields = [
+            'id',
+            'first_names',
+            'last_name',
+            'sex',
+            'birth_location',
+            'death_location',
+            'buried_location',
+            'occupation',
+        ];
+        let data = {};
+        for (const field of stringFields) {
+            data[field] = this.state[field];
+        }
+
+        // Django Rest Framework's serializers expect empty dates to be
+        // "null", rather than an empty string.
+        const dateFields = ['birth_date', 'death_date', 'buried_date'];
+        for (let field of dateFields) {
+            data[field] = this.state[field] || null;
+        }
+        this.props.callbacks.save(data);
     }
 
     revert() {
