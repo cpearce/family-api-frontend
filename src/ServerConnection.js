@@ -124,6 +124,7 @@ export class ServerConnection {
         if (!response.ok) {
             throw new Error("Failed to save Individual; code " + response.status);
         }
+        return await response.json();
     }
 
 }

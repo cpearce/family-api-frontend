@@ -119,13 +119,24 @@ class App extends Component {
 
     async saveCallback(individual) {
         try {
-            await this.server.saveIndividual(individual);
-            // Re-pull all the data, so we're all up to date.
-            this.setState({
-                database: null,
+            const isNew = individual.id === null;
+            let updatedIndividual = await this.server.saveIndividual(individual);
+            // Update our copy of the database after changes.
+            this.setState((props, state) => {
+                let individuals = this.state.database.individuals;
+                if (isNew) {
+                    individuals.push(updatedIndividual);
+                } else {
+                    for (let i = 0; i < individuals.length; i++) {
+                        if (individuals[i].id == updatedIndividual.id) {
+                            individuals[i] = updatedIndividual;
+                        }
+                    }
+                }
+                this.state.database.idToIndividual.set(updatedIndividual.id, updatedIndividual);
+                return state;
             });
-            this.setData(await this.server.ensureDataDownloaded());
-            this.detailCallback(individual.id);
+            this.detailCallback(updatedIndividual.id);
         } catch (e) {
             this.error(e.message);
         }
