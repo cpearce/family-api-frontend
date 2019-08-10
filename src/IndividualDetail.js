@@ -134,6 +134,13 @@ export class IndividualDetail extends Component {
         const birth = formatEvent(individual.birth_date, individual.birth_location);
         const death = formatEvent(individual.death_date, individual.death_location);
         const buried = formatEvent(individual.buried_date, individual.buried_location);
+        const editButton = !this.props.canEdit ? null : (
+            <div>
+                <button onClick={() => this.props.callbacks.edit(individual.id)}>
+                    Edit
+                </button>
+            </div>
+        );
         const sex = individual.sex === "M" ? "Male" :
             (individual.sex === "F" ? "Female" : "?");
         return (
@@ -166,11 +173,7 @@ export class IndividualDetail extends Component {
                         this.props.callbacks.detail,
                         idToIndividual)}
                 </div>
-                <div>
-                    <button onClick={() => this.props.callbacks.edit(individual.id)}>
-                        Edit
-                    </button>
-                </div>
+                {editButton}
             </div>
         );
     }

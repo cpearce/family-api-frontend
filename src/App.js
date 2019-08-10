@@ -144,7 +144,7 @@ class App extends Component {
         console.log("logout");
         try {
             await this.server.logout();
-            this.navigate("Family Tree: Login", "/login");
+            this.navigate("Family Tree: Login", "/login", { database: null });
         } catch (e) {
             this.error(e.message);
         }
@@ -185,7 +185,11 @@ class App extends Component {
 
     editCallback(individualId) {
         console.log("edit " + individualId);
-        this.navigate("Edit Individual", "/individuals/" + individualId + "/edit");
+        if (this.state.canEdit) {
+            this.navigate("Edit Individual", "/individuals/" + individualId + "/edit");
+        } else {
+            this.error("Tried to edit, but you don't have edit privileges!");
+        }
     }
 
     navigate(title, path, otherState={}) {
@@ -271,6 +275,7 @@ class App extends Component {
                             individualId={id}
                             database={this.state.database}
                             callbacks={this.callbacks}
+                            canEdit={this.state.canEdit}
                         />
                     </div>
                 );
