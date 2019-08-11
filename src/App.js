@@ -84,7 +84,13 @@ class App extends Component {
             let account = await this.server.checkAccount();
             // Our stored token is still valid. Show the individuals list.
             console.log("Can edit: " + account.can_edit);
-            this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
+            if (this.state.path === "/login") {
+                this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
+            } else {
+                this.setState({
+                    canEdit: account.can_edit,
+                });
+            }
         } catch (e) {
             // Stored token must have not worked. We should show a login page.
             console.log("Initial connect failed. Error=" + e.message);
