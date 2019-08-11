@@ -10,7 +10,8 @@ function Header(props) {
     const isLoginPage = window.location.pathname === "/" ||
                         window.location.pathname === "/login";
     const items = isLoginPage ? [] : [
-        { text: "Home", click: props.callbacks.search, path: "/individuals" },
+        { text: "Individuals", click: props.callbacks.search, path: "/individuals" },
+        { text: "Add", click: props.callbacks.addIndividual, path: "/individuals/add" },
         { text: "Logout", click: props.callbacks.logout, path: "" },
     ];
 
@@ -63,6 +64,8 @@ class App extends Component {
             detail: this.detailCallback.bind(this),
             edit: this.editCallback.bind(this),
             save: this.saveCallback.bind(this),
+            addIndividual: this.addIndividualCallback.bind(this),
+            deleteIndividual: this.deleteIndividual.bind(this),
         };
 
         window.addEventListener("popstate", ((e) => {
@@ -181,6 +184,28 @@ class App extends Component {
         }
     }
 
+    async deleteIndividual(individualId) {
+        try {
+            await this.server.deleteIndividual(individualId);
+            // Update our copy of the database after changes.
+            this.setState((props, state) => {
+                this.state.database.individuals = this.state.database.individuals.filter(
+                    (i) => i.id !== individualId
+                );
+                this.state.database.idToIndividual.delete(individualId);
+                return state;
+            });
+
+            this.searchIndividuals();
+        } catch (e) {
+            this.error(e.message);
+        }
+    }
+
+    addIndividualCallback() {
+        this.navigate("Add Individual", "/individuals/add", {});
+    }
+
     searchIndividuals() {
         this.navigate("Individuals", "/individuals");
     }
@@ -264,6 +289,21 @@ class App extends Component {
                 </div>
             );
         }
+
+        // URL: /individuals/add
+        if (this.state.path === "/individuals/add") {
+            return (
+                <div>
+                    {header}
+                    <EditIndividual
+                        database={this.state.database}
+                        callbacks={this.callbacks}
+                        canEdit={this.state.canEdit}
+                    />
+                </div>
+            );
+        }
+
         const chunks = window.location.pathname.split("/").filter(nonNull);
         if (chunks.length >= 2 && chunks[0] === "individuals") {
             const id = parseInt(chunks[1]);

@@ -7,6 +7,7 @@ export class EditIndividual extends Component {
         this.handleInputChange = this.handleInputChange.bind(this);
         this.save = this.save.bind(this);
         this.revert = this.revert.bind(this);
+        this.deleteIndividual = this.deleteIndividual.bind(this);
 
         const individual = (id) => {
             return props.database.idToIndividual.get(id);
@@ -31,10 +32,13 @@ export class EditIndividual extends Component {
             return names.join(" & ");
         };
         this.child_in_family_options =
+            [[0, ""]].concat(
             props.database.families.map(
                 (f) => [f.id, partnersOf(f)]
-            );
+            ));
         this.child_in_family_options.sort((a,b) => a[1].localeCompare(b[1]));
+
+        console.log(individual(this.props.individualId));
     }
 
     handleInputChange(event) {
@@ -47,19 +51,31 @@ export class EditIndividual extends Component {
         const idToIndividual = this.props.database.idToIndividual;
         const individual = idToIndividual.get(this.props.individualId);
         return {
-            id: individual.id || null,
-            first_names: individual.first_names || "",
-            last_name: individual.last_name || "",
-            sex: individual.sex || "",
-            birth_date: individual.birth_date || "",
-            birth_location: individual.birth_location || "",
-            death_date: individual.death_date || "",
-            death_location: individual.death_location || "",
-            buried_date: individual.buried_date || "",
-            buried_location: individual.buried_location || "",
-            occupation: individual.occupation || "",
-            child_in_family: individual.child_in_family || "",
+            id: individual ? (individual.id || null) : null,
+            first_names: individual ? (individual.first_names || "") : "",
+            last_name: individual ? (individual.last_name || "") : "",
+            sex: individual ? (individual.sex || "?") : "?",
+            birth_date: individual ? (individual.birth_date || "") : "",
+            birth_location: individual ? (individual.birth_location || "") : "",
+            death_date: individual ? (individual.death_date || "") : "",
+            death_location: individual ? (individual.death_location || "") : "",
+            buried_date: individual ? (individual.buried_date || "") : "",
+            buried_location: individual ? (individual.buried_location || "") : "",
+            occupation: individual ? (individual.occupation || "") : "",
+            child_in_family: individual ? (individual.child_in_family || "") : "",
         };
+    }
+
+    deleteIndividual() {
+        if (!this.props.individualId) {
+            return;
+        }
+        const msg =
+            "Do you really want to delete this\n" +
+            "individual from the database?";
+        if (window.confirm(msg)) {
+            this.props.callbacks.deleteIndividual(this.props.individualId);
+        }
     }
 
     save() {
@@ -68,7 +84,6 @@ export class EditIndividual extends Component {
         const stringFields = [
             'first_names',
             'last_name',
-            'sex',
             'birth_location',
             'death_location',
             'buried_location',
@@ -81,10 +96,20 @@ export class EditIndividual extends Component {
 
         // Django Rest Framework's serializers expect empty dates to be
         // "null", rather than an empty string.
-        const nullableFields = ['id', 'birth_date', 'death_date', 'buried_date', 'child_in_family'];
+        const nullableFields = [
+            'id', 'birth_date', 'death_date',
+            'buried_date', 'child_in_family'
+        ];
         for (let field of nullableFields) {
             data[field] = this.state[field] || null;
         }
+
+        // The 'sex' field is either 'M', 'F', or '?'.
+        data.sex = this.state.sex;
+        if (data.sex !== 'M' && data.sex !== 'F') {
+            data.sex = "?";
+        }
+
         this.props.callbacks.save(data);
     }
 
@@ -98,6 +123,10 @@ export class EditIndividual extends Component {
                 <option key={f[0]} value={f[0]}>{f[1]}</option>
             )
         );
+        const maybeDeleteButton = !this.props.individualId ? null : (
+            <button onClick={this.deleteIndividual}>Delete Individual</button>
+        );
+
         return (
             <div>
                 <div>
@@ -206,6 +235,7 @@ export class EditIndividual extends Component {
                 <div>
                     <button onClick={this.save}>Save</button>
                     <button onClick={this.revert}>Revert</button>
+                    {maybeDeleteButton}
                 </div>
             </div>
         );

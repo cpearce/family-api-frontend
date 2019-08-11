@@ -107,7 +107,7 @@ export class ServerConnection {
     }
 
     async saveIndividual(individual) {
-        let method = individual.id ? "PATCH" : "PUT";
+        let method = individual.id ? "PATCH" : "POST";
         let suffix = individual.id ? (individual.id + "/") : "";
         const url = backend_server + "individuals/" + suffix;
         const init = {
@@ -125,6 +125,23 @@ export class ServerConnection {
             throw new Error("Failed to save Individual; code " + response.status);
         }
         return await response.json();
+    }
+
+    async deleteIndividual(individualId) {
+        const url = backend_server + "individuals/" + individualId;
+        const init = {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+        let response = await fetch(url, init);
+        if (!response.ok) {
+            throw new Error("Failed to delete Individual:  " + response.status);
+        }
     }
 
     async checkAccount() {
