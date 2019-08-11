@@ -7,6 +7,34 @@ export class EditIndividual extends Component {
         this.handleInputChange = this.handleInputChange.bind(this);
         this.save = this.save.bind(this);
         this.revert = this.revert.bind(this);
+
+        const individual = (id) => {
+            return props.database.idToIndividual.get(id);
+        }
+
+        const partnersOf = (f) => {
+            // Make a copy of the partners list.
+            let partners = f.partners.slice();
+            // Partners list is a list of individuals' ids.
+            // Sort partners list so the male partner is first.
+            let cmp = (a, b) => {
+                return individual(a).sex > individual(b).sex;
+            };
+            partners.sort(cmp);
+            // Convert names to lastname + firstname.
+            const names = partners.map(
+                (id) => {
+                    const i = individual(id);
+                    return i.last_name + ", " + i.first_names;
+                }
+            );
+            return names.join(" & ");
+        };
+        this.child_in_family_options =
+            props.database.families.map(
+                (f) => [f.id, partnersOf(f)]
+            );
+        this.child_in_family_options.sort((a,b) => a[1].localeCompare(b[1]));
     }
 
     handleInputChange(event) {
@@ -30,6 +58,7 @@ export class EditIndividual extends Component {
             buried_date: individual.buried_date || "",
             buried_location: individual.buried_location || "",
             occupation: individual.occupation || "",
+            child_in_family: individual.child_in_family || "",
         };
     }
 
@@ -52,7 +81,7 @@ export class EditIndividual extends Component {
 
         // Django Rest Framework's serializers expect empty dates to be
         // "null", rather than an empty string.
-        const nullableFields = ['id', 'birth_date', 'death_date', 'buried_date'];
+        const nullableFields = ['id', 'birth_date', 'death_date', 'buried_date', 'child_in_family'];
         for (let field of nullableFields) {
             data[field] = this.state[field] || null;
         }
@@ -64,6 +93,11 @@ export class EditIndividual extends Component {
     }
 
     render() {
+        const child_in_family_options = this.child_in_family_options.map(
+            f => (
+                <option key={f[0]} value={f[0]}>{f[1]}</option>
+            )
+        );
         return (
             <div>
                 <div>
@@ -158,6 +192,16 @@ export class EditIndividual extends Component {
                         id="occupation"
                         onChange={this.handleInputChange}
                     />
+                </div>
+                <div>
+                    <label htmlFor="child_in_family">Child of family:</label>
+                    <select
+                        id="child_in_family"
+                        value={this.state.child_in_family}
+                        onChange={this.handleInputChange}
+                    >
+                        {child_in_family_options}
+                    </select>
                 </div>
                 <div>
                     <button onClick={this.save}>Save</button>
