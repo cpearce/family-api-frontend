@@ -1,4 +1,5 @@
-const backend_server = "http://127.0.0.1:8000/api/v1/";
+// const backend_server = "http://localhost:5000/api/v1/";
+const backend_server = "https://guarded-lowlands-11681.herokuapp.com/api/v1/";
 const FAMILIES_URL = backend_server + 'families/';
 const INDIVIDUALS_URL = backend_server + 'individuals/';
 const AUTH_TOKEN = "authToken";
