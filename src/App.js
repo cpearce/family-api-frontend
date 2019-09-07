@@ -11,7 +11,7 @@ function Header(props) {
                         window.location.pathname === "/login";
     const items = isLoginPage ? [] : [
         { text: "Individuals", click: props.callbacks.search, path: "/individuals" },
-        { text: "Add", click: props.callbacks.addIndividual, path: "/individuals/add" },
+        ...(props.canEdit ? [{ text: "Add", click: props.callbacks.addIndividual, path: "/individuals/add" }] : []),
         { text: "Logout", click: props.callbacks.logout, path: "" },
     ];
 
@@ -164,7 +164,7 @@ class App extends Component {
             const isNew = individual.id === null;
             let updatedIndividual = await this.server.saveIndividual(individual);
             // Update our copy of the database after changes.
-            this.setState((props, state) => {
+            this.setState((state, props) => {
                 let individuals = this.state.database.individuals;
                 if (isNew) {
                     individuals.push(updatedIndividual);
@@ -188,7 +188,7 @@ class App extends Component {
         try {
             await this.server.deleteIndividual(individualId);
             // Update our copy of the database after changes.
-            this.setState((props, state) => {
+            this.setState((state, props) => {
                 this.state.database.individuals = this.state.database.individuals.filter(
                     (i) => i.id !== individualId
                 );
@@ -237,6 +237,7 @@ class App extends Component {
                 path={this.state.path}
                 screen={this.state.screen}
                 callbacks={this.callbacks}
+                canEdit={this.state.canEdit}
             />
         );
         console.log("App.render " + window.location.pathname);
