@@ -107,6 +107,25 @@ export class ServerConnection {
         window.localStorage.removeItem(AUTH_TOKEN);
     }
 
+    async newIndividual() {
+        let method = "POST";
+        const url = backend_server + "individuals/";
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+        let response = await fetch(url, init);
+        if (!response.ok) {
+            throw new Error("Failed to create new Individual; code " + response.status);
+        }
+        return await response.json();
+    }
+
     async saveIndividual(individual) {
         let method = individual.id ? "PATCH" : "POST";
         let suffix = individual.id ? (individual.id + "/") : "";

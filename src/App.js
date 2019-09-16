@@ -159,25 +159,29 @@ class App extends Component {
         }
     }
 
-    async saveCallback(individual) {
-        try {
-            const isNew = individual.id === null;
-            let updatedIndividual = await this.server.saveIndividual(individual);
-            // Update our copy of the database after changes.
-            this.setState((state, props) => {
-                let individuals = this.state.database.individuals;
-                if (isNew) {
-                    individuals.push(updatedIndividual);
-                } else {
-                    for (let i = 0; i < individuals.length; i++) {
-                        if (individuals[i].id === updatedIndividual.id) {
-                            individuals[i] = updatedIndividual;
-                        }
+    updateIndividual(individual) {
+        // Updates individual in local copy of DB to match.
+        // May need to add to DB if individual is new.
+        this.setState((state, props) => {
+            let individuals = this.state.database.individuals;
+            if (!this.state.database.idToIndividual.get(individual.id)) {
+                individuals.push(individual);
+            } else {
+                for (let i = 0; i < individuals.length; i++) {
+                    if (individuals[i].id === individual.id) {
+                        individuals[i] = individual;
+                        break;
                     }
                 }
-                this.state.database.idToIndividual.set(updatedIndividual.id, updatedIndividual);
-                return state;
-            });
+            }
+            this.state.database.idToIndividual.set(individual.id, individual);
+        });
+    }
+
+    async saveCallback(individual) {
+        try {
+            let updatedIndividual = await this.server.saveIndividual(individual);
+            this.updateIndividual(updatedIndividual);
             this.detailCallback(updatedIndividual.id);
         } catch (e) {
             this.error(e.message);
@@ -202,8 +206,15 @@ class App extends Component {
         }
     }
 
-    addIndividualCallback() {
-        this.navigate("Add Individual", "/individuals/add", {});
+    async addIndividualCallback() {
+        try {
+            const individual = await this.server.newIndividual()
+            console.log("Created individual " + individual.id);
+            this.updateIndividual(individual);
+            this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
+        } catch (e) {
+            console.log("Failed to create individual");
+        }
     }
 
     searchIndividuals() {
