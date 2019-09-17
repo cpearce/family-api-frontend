@@ -27,7 +27,8 @@ export class Search extends Component {
             ? () => true
             : (i) => {
                 return i.last_name.toLowerCase().match(pattern) ||
-                    i.first_names.toLowerCase().match(pattern);
+                    i.first_names.toLowerCase().match(pattern) ||
+                    (i.first_names + " " + i.last_name).toLowerCase().match(pattern);
             };
         let results = this.props.database.individuals.filter(f);
         let cmp = (a, b) => {
