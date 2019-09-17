@@ -164,6 +164,68 @@ export class ServerConnection {
         }
     }
 
+    async newFamily(partnerId) {
+        let method = "POST";
+        const url = backend_server + "families/";
+        const family = {
+            partners: [partnerId],
+            children: [],
+        };
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+            body: JSON.stringify(family),
+        };
+        let response = await fetch(url, init);
+        if (!response.ok) {
+            throw new Error("Failed to create new family; code " + response.status);
+        }
+        return await response.json();
+    }
+
+    async saveFamily(family) {
+        console.log("saveFamily(" + JSON.stringify(family) + ")");
+        let method = "PUT";
+        const url = backend_server + "families/" + family.id + "/";
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+            body: JSON.stringify(family),
+        };
+        let response = await fetch(url, init);
+        if (!response.ok) {
+            throw new Error("Failed to save family; code " + response.status);
+        }
+        return await response.json();
+    }
+
+    async deleteFamily(familyId) {
+        const url = backend_server + "families/" + familyId;
+        const init = {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+        let response = await fetch(url, init);
+        if (!response.ok) {
+            throw new Error("Failed to delete Family:  " + response.status);
+        }
+    }
+
     async checkAccount() {
         if (!this.token) {
             throw new Error("No access token");

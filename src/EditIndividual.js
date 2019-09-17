@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FamiliesOfList } from './EditFamily.js';
 
 export class EditIndividual extends Component {
     constructor(props) {
@@ -6,7 +7,7 @@ export class EditIndividual extends Component {
         this.state = this.initialState();
         this.handleInputChange = this.handleInputChange.bind(this);
         this.save = this.save.bind(this);
-        this.revert = this.revert.bind(this);
+        this.cancel = this.cancel.bind(this);
         this.deleteIndividual = this.deleteIndividual.bind(this);
 
         const individual = (id) => {
@@ -29,6 +30,11 @@ export class EditIndividual extends Component {
                     return i.last_name + ", " + i.first_names;
                 }
             );
+            // Ensure if the spouse is unknown, we render something that makes
+            // that obvious.
+            while (names.length < 2) {
+                names.push("Unknown");
+            }
             return names.join(" & ");
         };
         this.child_in_family_options =
@@ -63,6 +69,7 @@ export class EditIndividual extends Component {
             buried_location: individual ? (individual.buried_location || "") : "",
             occupation: individual ? (individual.occupation || "") : "",
             child_in_family: individual ? (individual.child_in_family || "") : "",
+            families: individual ? (individual.partner_in_families || []) : [],
         };
     }
 
@@ -113,8 +120,8 @@ export class EditIndividual extends Component {
         this.props.callbacks.save(data);
     }
 
-    revert() {
-        this.setState(this.initialState());
+    cancel() {
+        this.props.callbacks.detail(this.props.individualId);
     }
 
     render() {
@@ -129,6 +136,9 @@ export class EditIndividual extends Component {
 
         return (
             <div>
+                <div>
+                    ID: {this.state.id}
+                </div>
                 <div>
                     <label htmlFor="last_name">Last Name:</label>
                     <input
@@ -233,10 +243,16 @@ export class EditIndividual extends Component {
                     </select>
                 </div>
                 <div>
-                    <button onClick={this.save}>Save</button>
-                    <button onClick={this.revert}>Revert</button>
+                    <button onClick={this.save}>Save Changes</button>
+                    <button onClick={this.cancel}>Discard Unsaved Changes</button>
                     {maybeDeleteButton}
                 </div>
+                <FamiliesOfList
+                    callbacks={this.props.callbacks}
+                    database={this.props.database}
+                    individualId={this.props.individualId}
+                    families={this.state.families}
+                />
             </div>
         );
     }

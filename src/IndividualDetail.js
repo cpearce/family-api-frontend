@@ -126,6 +126,7 @@ export class IndividualDetail extends Component {
         const idToFamily = this.props.database.idToFamily;
 
         const individual = idToIndividual.get(this.props.individualId);
+        console.log(JSON.stringify(individual));
         const families = individual.partner_in_families.map(
             (id) => idToFamily.get(id)
         );

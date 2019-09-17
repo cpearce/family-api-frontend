@@ -45,6 +45,15 @@ function listToMap(list) {
     );
 }
 
+function contains(collection, element) {
+    for (const value of collection) {
+        if (value === element) {
+            return true;
+        }
+    }
+    return false;
+}
+
 class App extends Component {
     constructor(props) {
         super(props);
@@ -66,6 +75,9 @@ class App extends Component {
             save: this.saveCallback.bind(this),
             addIndividual: this.addIndividualCallback.bind(this),
             deleteIndividual: this.deleteIndividual.bind(this),
+            addFamily: this.addFamilyCallback.bind(this),
+            saveFamily: this.saveFamily.bind(this),
+            deleteFamily: this.deleteFamily.bind(this),
         };
 
         window.addEventListener("popstate", ((e) => {
@@ -175,6 +187,7 @@ class App extends Component {
                 }
             }
             this.state.database.idToIndividual.set(individual.id, individual);
+            return state;
         });
     }
 
@@ -213,7 +226,79 @@ class App extends Component {
             this.updateIndividual(individual);
             this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
         } catch (e) {
-            console.log("Failed to create individual");
+            this.error(e.message);
+        }
+    }
+
+    updateFamily(family) {
+        // Updates individual in local copy of DB to match.
+        // May need to add to DB if individual is new.
+        this.setState((state, props) => {
+            let families = this.state.database.families;
+            if (!this.state.database.idToFamily.get(family.id)) {
+                families.push(family);
+            } else {
+                for (let i = 0; i < families.length; i++) {
+                    if (families[i].id === family.id) {
+                        families[i] = family;
+                        break;
+                    }
+                }
+            }
+            this.state.database.idToFamily.set(family.id, family);
+            // Ensure all partners in the family have the family id
+            // in their partners_in_family list.
+            for (const individualId of family.partners) {
+                let individual = this.state.database.idToIndividual.get(individualId);
+                if (!contains(individual.partner_in_families, family.id)) {
+                    individual.partner_in_families.push(family.id);
+                }
+            }
+            return state;
+        });
+    }
+
+    async addFamilyCallback(partnerId) {
+        try {
+            console.log("Creating family for partner=" + partnerId);
+            const family = await this.server.newFamily(partnerId);
+            console.log("Created family " + family.id);
+            this.updateFamily(family);
+        } catch (e) {
+            this.error(e.message);
+        }
+    }
+
+    async saveFamily(family) {
+        try {
+            console.log("Saving family " + family.id);
+            family = await this.server.saveFamily(family);
+            this.updateFamily(family);
+        } catch (e) {
+            this.error(e.message);
+        }
+    }
+
+    async deleteFamily(familyId) {
+        try {
+            await this.server.deleteFamily(familyId);
+            // Update our copy of the database after changes.
+            this.setState((state, props) => {
+                this.state.database.families = this.state.database.families.filter(
+                    i => i.id !== familyId
+                );
+                const family = this.state.database.idToFamily.get(familyId);
+                for (const id of family.partners) {
+                    let individual = this.state.database.idToIndividual.get(id);
+                    individual.partner_in_families = individual.partner_in_families.filter(
+                        id => id !== family.id
+                    );
+                }
+                this.state.database.idToFamily.delete(familyId);
+                return state;
+            });
+        } catch (e) {
+            this.error(e.message);
         }
     }
 
