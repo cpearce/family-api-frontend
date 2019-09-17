@@ -1,5 +1,7 @@
-// const backend_server = "http://localhost:5000/api/v1/";
-const backend_server = "https://guarded-lowlands-11681.herokuapp.com/api/v1/";
+// If the REACT_APP_BACKEND environment variable was set a build time, use that
+// as the URL of our backend server, otherwise point to Heroku.
+const backend_server =
+    process.env.REACT_APP_BACKEND || "https://guarded-lowlands-11681.herokuapp.com/api/v1/";
 const FAMILIES_URL = backend_server + 'families/';
 const INDIVIDUALS_URL = backend_server + 'individuals/';
 const AUTH_TOKEN = "authToken";
