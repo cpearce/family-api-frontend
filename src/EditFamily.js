@@ -5,7 +5,7 @@ export class FamiliesOfList extends Component {
     partnerInFamilies() {
         const individual =
             this.props.database.idToIndividual.get(this.props.individualId);
-        return individual.partner_in_families;
+        return individual ? individual.partner_in_families : [];
     }
     render() {
         const families = this.partnerInFamilies().map(
