@@ -210,7 +210,7 @@ export class ServerConnection {
     }
 
     async deleteFamily(familyId) {
-        const url = backend_server + "families/" + familyId;
+        const url = backend_server + "families/" + familyId + "/";
         const init = {
             method: "DELETE",
             headers: {
