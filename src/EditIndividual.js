@@ -4,12 +4,25 @@ import { FamiliesOfList } from './EditFamily.js';
 export class EditIndividual extends Component {
     constructor(props) {
         super(props);
-        this.state = this.initialState();
+        this.state = {
+        };
         this.handleInputChange = this.handleInputChange.bind(this);
         this.save = this.save.bind(this);
         this.cancel = this.cancel.bind(this);
         this.deleteIndividual = this.deleteIndividual.bind(this);
-
+        this.init();
+    }
+    async init() {
+        try {
+            // Should be cached if we came from the view individual screen...
+            const data = await this.props.server.verboseIndividual(this.props.individualId);
+            this.setState({
+                data: data
+            });
+        } catch (e) {
+            this.props.callbacks.error(e.message + e.fileName + e.lineNumber);
+        }
+/*
         const individual = (id) => {
             return props.database.idToIndividual.get(id);
         }
@@ -45,6 +58,7 @@ export class EditIndividual extends Component {
         this.child_in_family_options.sort((a,b) => a[1].localeCompare(b[1]));
 
         console.log(individual(this.props.individualId));
+        */
     }
 
     handleInputChange(event) {
@@ -53,27 +67,8 @@ export class EditIndividual extends Component {
         });
     }
 
-    initialState() {
-        const idToIndividual = this.props.database.idToIndividual;
-        const individual = idToIndividual.get(this.props.individualId);
-        return {
-            id: individual ? (individual.id || null) : null,
-            first_names: individual ? (individual.first_names || "") : "",
-            last_name: individual ? (individual.last_name || "") : "",
-            sex: individual ? (individual.sex || "?") : "?",
-            birth_date: individual ? (individual.birth_date || "") : "",
-            birth_location: individual ? (individual.birth_location || "") : "",
-            death_date: individual ? (individual.death_date || "") : "",
-            death_location: individual ? (individual.death_location || "") : "",
-            buried_date: individual ? (individual.buried_date || "") : "",
-            buried_location: individual ? (individual.buried_location || "") : "",
-            occupation: individual ? (individual.occupation || "") : "",
-            child_in_family: individual ? (individual.child_in_family || "") : "",
-            families: individual ? (individual.partner_in_families || []) : [],
-        };
-    }
-
     deleteIndividual() {
+        /*
         if (!this.props.individualId) {
             return;
         }
@@ -83,9 +78,11 @@ export class EditIndividual extends Component {
         if (window.confirm(msg)) {
             this.props.callbacks.deleteIndividual(this.props.individualId);
         }
+        */
     }
 
     save() {
+        /*
         // Make a copy of individual's data, with fields in a format
         // suitable for sending to server.
         const stringFields = [
@@ -118,6 +115,7 @@ export class EditIndividual extends Component {
         }
 
         this.props.callbacks.save(data);
+        */
     }
 
     cancel() {
@@ -125,25 +123,38 @@ export class EditIndividual extends Component {
     }
 
     render() {
+        const child_in_family_options = null;
+        /*
         const child_in_family_options = this.child_in_family_options.map(
             f => (
                 <option key={f[0]} value={f[0]}>{f[1]}</option>
             )
         );
+        */
         const maybeDeleteButton = !this.props.individualId ? null : (
             <button onClick={this.deleteIndividual}>Delete Individual</button>
         );
 
+        if (!this.state.data) {
+            return (
+                <div>
+                    Awaiting data download...
+                </div>
+            );
+        }
+
+        const individual = this.state.data.individual;
+
         return (
             <div>
                 <div>
-                    ID: {this.state.id}
+                    ID: {individual.id}
                 </div>
                 <div>
                     <label htmlFor="last_name">Last Name:</label>
                     <input
                         type="text"
-                        value={this.state.last_name}
+                        value={individual.last_name}
                         id="last_name"
                         onChange={this.handleInputChange}
                     />
@@ -152,7 +163,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="first_names">First Names:</label>
                     <input
                         type="text"
-                        value={this.state.first_names}
+                        value={individual.first_names}
                         id="first_names"
                         onChange={this.handleInputChange}
                     />
@@ -161,7 +172,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="sex">Sex:</label>
                     <select
                         id="sex"
-                        value={this.state.sex}
+                        value={individual.sex}
                         onChange={this.handleInputChange}
                     >
                         <option value="M">Male</option>
@@ -173,7 +184,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="birth_date">Birth Date:</label>
                     <input
                         type="date"
-                        value={this.state.birth_date}
+                        value={individual.birth_date}
                         id="birth_date"
                         onChange={this.handleInputChange}
                     />
@@ -182,7 +193,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="birth_location">Birth Location:</label>
                     <input
                         type="text"
-                        value={this.state.birth_location}
+                        value={individual.birth_location}
                         id="birth_location"
                         onChange={this.handleInputChange}
                     />
@@ -191,7 +202,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="death_date">Death Date:</label>
                     <input
                         type="date"
-                        value={this.state.death_date}
+                        value={individual.death_date}
                         id="death_date"
                         onChange={this.handleInputChange}
                     />
@@ -200,7 +211,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="death_location">Death Location:</label>
                     <input
                         type="text"
-                        value={this.state.death_location}
+                        value={individual.death_location}
                         id="death_location"
                         onChange={this.handleInputChange}
                     />
@@ -209,7 +220,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="buried_date">Buried Date:</label>
                     <input
                         type="date"
-                        value={this.state.buried_date}
+                        value={individual.buried_date}
                         id="buried_date"
                         onChange={this.handleInputChange}
                     />
@@ -218,7 +229,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="buried_location">Buried Location:</label>
                     <input
                         type="text"
-                        value={this.state.buried_location}
+                        value={individual.buried_location}
                         id="buried_location"
                         onChange={this.handleInputChange}
                     />
@@ -227,7 +238,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="occupation">Occupation:</label>
                     <input
                         type="text"
-                        value={this.state.occupation}
+                        value={individual.occupation}
                         id="occupation"
                         onChange={this.handleInputChange}
                     />
@@ -236,7 +247,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="child_in_family">Child of family:</label>
                     <select
                         id="child_in_family"
-                        value={this.state.child_in_family}
+                        value={individual.child_in_family}
                         onChange={this.handleInputChange}
                     >
                         {child_in_family_options}
@@ -248,10 +259,9 @@ export class EditIndividual extends Component {
                     {maybeDeleteButton}
                 </div>
                 <FamiliesOfList
-                    callbacks={this.props.callbacks}
-                    database={this.props.database}
+                    {...this.props.callbacks}
                     individualId={this.props.individualId}
-                    families={this.state.families}
+                    families={this.state.data.families}
                 />
             </div>
         );

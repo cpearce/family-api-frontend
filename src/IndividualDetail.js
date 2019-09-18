@@ -38,10 +38,10 @@ function formatChildren(familyId, children, detailCallback) {
     if (children.length === 0) {
         return null;
     }
-    const f = (c) => (
-        <li key={familyId + "-" + c.id}>
-            <button onClick={() => detailCallback(c.id)}>
-                {nameAndLifetimeOf(c)}
+    const f = (child) => (
+        <li key={familyId + "-" + child.id}>
+            <button onClick={() => detailCallback(child.id)}>
+                {nameAndLifetimeOf(child)}
             </button>
         </li>
     );
@@ -56,26 +56,19 @@ function formatChildren(familyId, children, detailCallback) {
 }
 
 function formatFamilies(individualId, families, detailCallback, idToIndividual) {
-    const f = (f) => {
-        const partners = f.partners.filter((id) => id !== individualId)
-            .map((id) => idToIndividual.get(id));
-        if (partners.length !== 1) {
-            return null;
-        }
-        const spouse = partners[0];
-        const children = f.children.map(
-            (id) => idToIndividual.get(id)
-        );
+    const f = (family) => {
+        const spouse = family.spouse;
+        const children = family.children;
         return (
-            <li key={f.id}>
+            <li key={family.id}>
                 <div className="spouse">
                     Partner:
                     <button onClick={() => detailCallback(spouse.id)}>
                         {nameAndLifetimeOf(spouse)}
                     </button>
                 </div>
-                <div>Married: {formatEvent(f.married_date, f.married_location)}</div>
-                {formatChildren(f.id, children, detailCallback)}
+                <div>Married: {formatEvent(family.married_date, family.married_location)}</div>
+                {formatChildren(family.id, children, detailCallback)}
             </li>
         );
     }
@@ -107,30 +100,36 @@ function formatParents(parents, detailCallback) {
     );
 }
 
-function parentsOf(individual, idToIndividual, idToFamily) {
-    if (!individual.child_in_family) {
-        return [];
-    }
-    const family = idToFamily.get(individual.child_in_family);
-    if (!family) {
-        return [];
-    }
-    return family.partners.map(
-        (id) => idToIndividual.get(id)
-    );
-}
-
 export class IndividualDetail extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+        };
+        this.init();
+    }
+    async init() {
+        try {
+            const data = await this.props.server.verboseIndividual(this.props.individualId);
+            this.setState({
+                data: data
+            });
+            console.log("Downloaded.");
+        } catch (e) {
+            this.props.callbacks.error(e.message + e.fileName + e.lineNumber);
+        }
+    }
     render() {
-        const idToIndividual = this.props.database.idToIndividual;
-        const idToFamily = this.props.database.idToFamily;
-
-        const individual = idToIndividual.get(this.props.individualId);
+        if (!this.state.data) {
+            return (
+                <div>
+                    Retrieving data...
+                </div>
+            );
+        }
+        const individual = this.state.data.individual;
         console.log(JSON.stringify(individual));
-        const families = individual.partner_in_families.map(
-            (id) => idToFamily.get(id)
-        );
-        const parents = parentsOf(individual, idToIndividual, idToFamily)
+        const families = this.state.data.families;
+        const parents = this.state.data.parents;
 
         const birth = formatEvent(individual.birth_date, individual.birth_location);
         const death = formatEvent(individual.death_date, individual.death_location);
@@ -171,8 +170,7 @@ export class IndividualDetail extends Component {
                     {formatFamilies(
                         this.props.individualId,
                         families,
-                        this.props.callbacks.detail,
-                        idToIndividual)}
+                        this.props.callbacks.detail)}
                 </div>
                 {editButton}
             </div>

@@ -11,6 +11,7 @@ export class ServerConnection {
         this.token = localStorage.getItem(AUTH_TOKEN);
         console.log("Token retrieved from storage: " + this.token);
         this.ensureDataDownloaded.bind(this);
+        this.individuals = new Map();
     }
 
     async downloadJsonData(url) {
@@ -107,6 +108,58 @@ export class ServerConnection {
         console.log("Logout response status: " + response.status);
         this.token = null;
         window.localStorage.removeItem(AUTH_TOKEN);
+    }
+
+    async individual(id) {
+        let individual = this.individuals.get(id);
+        if (individual) {
+            return individual;
+        }
+        individual = await this.downloadJsonData(INDIVIDUALS_URL + id + "/");
+        this.updateCache([individual]);
+        return individual;
+    }
+
+    async verboseIndividual(id) {
+        const data = await this.downloadJsonData(INDIVIDUALS_URL + id + "/verbose");
+        this.updateCache([data.individual, ...data.parents]);
+        for (const family of data.families) {
+            this.updateCache([family.spouse, ...family.children]);
+        }
+        return data;
+    }
+
+    async searchIndividuals(query) {
+        console.log("Search " + query);
+        const url = backend_server + "search-individuals/" + query;
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+
+        let response = await fetch(url, init);
+        if (response.status === 401) {
+            // Unauthorized. Token may have expired.
+            this.logout();
+        }
+        console.log("Search " + url + " response status: " + response.status);
+        if (!response.ok) {
+            throw new Error("Search failed with status: " + response.status);
+        }
+        const individuals = await response.json();
+        this.updateCache(individuals);
+        return individuals;
+    }
+
+    updateCache(individuals) {
+        for (const individual of individuals) {
+            this.individuals.set(individual.id, individual);
+        }
     }
 
     async newIndividual() {

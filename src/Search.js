@@ -16,28 +16,12 @@ export class Search extends Component {
         super(props);
         this.state = {
             query: "",
+            results: [],
         };
         this.detailCallback = props.callbacks.detail;
         this.handleQueryChange = this.handleQueryChange.bind(this);
-    }
-
-    filteredIndividuals() {
-        const pattern = this.state.query.toLowerCase();
-        const f = !this.state.query
-            ? () => true
-            : (i) => {
-                return i.last_name.toLowerCase().match(pattern) ||
-                    i.first_names.toLowerCase().match(pattern) ||
-                    (i.first_names + " " + i.last_name).toLowerCase().match(pattern);
-            };
-        let results = this.props.database.individuals.filter(f);
-        let cmp = (a, b) => {
-            let a_str = (a.first_names + " " + a.last_name).toLowerCase();
-            let b_str = (b.first_names + " " + b.last_name).toLowerCase();
-            return a_str.localeCompare(b_str);
-        };
-        results.sort(cmp);
-        return results;
+        this.searchCount = 0;
+        this.timeout = null;
     }
 
     handleQueryChange(event) {
@@ -45,13 +29,35 @@ export class Search extends Component {
         this.setState({
             [event.target.name]: event.target.value
         });
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+        }
+        const query = event.target.value;
+        this.timeout = setTimeout(
+            () => this.search(query),
+            250
+        );
+    }
+
+    async search(query) {
+        this.searchCount++;
+        const searchCount = this.searchCount;
+        try {
+            const results = await this.props.server.searchIndividuals(query);
+            if (searchCount !== this.searchCount) {
+                // Another search has started. Ignore result.
+                return;
+            }
+            this.setState({
+                results: results,
+            })
+        } catch (e) {
+            this.props.callbacks.error(e.message);
+        }
     }
 
     render() {
-        let searchResults = null;
-        let count = this.props.database.individuals.length;
-        const filtered = this.filteredIndividuals();
-        searchResults = filtered.map(
+        const searchResults = this.state.results.map(
             (i) => {
                 const name = i.first_names + " " + i.last_name + " " + lifetime(i);
                 return (
@@ -61,10 +67,9 @@ export class Search extends Component {
                 )
             }
         );
-        count = filtered.length + " / " + count;
         return (
             <div>
-                <label htmlFor="search-box">Search {count} individuals:</label>
+                <label htmlFor="search-box">Search individuals:</label>
                 <input
                     name="query"
                     type="text"

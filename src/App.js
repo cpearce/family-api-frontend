@@ -39,11 +39,11 @@ function Header(props) {
     )
 }
 
-function listToMap(list) {
-    return new Map(
-        list.map((i) => [i.id, i])
-    );
-}
+// function listToMap(list) {
+//     return new Map(
+//         list.map((i) => [i.id, i])
+//     );
+// }
 
 function contains(collection, element) {
     for (const value of collection) {
@@ -78,6 +78,7 @@ class App extends Component {
             addFamily: this.addFamilyCallback.bind(this),
             saveFamily: this.saveFamily.bind(this),
             deleteFamily: this.deleteFamily.bind(this),
+            error: this.error.bind(this),
         };
 
         window.addEventListener("popstate", ((e) => {
@@ -113,23 +114,23 @@ class App extends Component {
             return;
         }
         // Connected. Try to download data. This is fatal if it fails.
-        try {
-            this.setData(await this.server.ensureDataDownloaded());
-        } catch (e) {
-            this.error("Failed to download data.");
-        }
+        // try {
+        //     this.setData(await this.server.ensureDataDownloaded());
+        // } catch (e) {
+        //     this.error("Failed to download data.");
+        // }
     }
 
-    setData(data) {
-        this.setState({
-            database: {
-                individuals: data.individuals,
-                families: data.families,
-                idToIndividual: listToMap(data.individuals),
-                idToFamily: listToMap(data.families),
-            },
-        });
-    }
+    // setData(data) {
+    //     this.setState({
+    //         database: {
+    //             individuals: data.individuals,
+    //             families: data.families,
+    //             idToIndividual: listToMap(data.individuals),
+    //             idToFamily: listToMap(data.families),
+    //         },
+    //     });
+    // }
 
     error(message) {
         console.log("error: " + message);
@@ -151,7 +152,7 @@ class App extends Component {
             let account = await this.server.checkAccount();
             console.log("Can edit: " + account.can_edit);
             this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
-            this.setData(await this.server.ensureDataDownloaded());
+            // this.setData(await this.server.ensureDataDownloaded());
         } catch (e) {
             this.error("Login Failed: " + e.message);
         } finally {
@@ -364,15 +365,15 @@ class App extends Component {
             );
         }
 
-        // We have a non-entry/fatal URL, wait until we have data...
-        if (this.state.database === null) {
-            return (
-                <div>
-                    {header}
-                    <div>Awaiting download of data...</div>
-                </div>
-            );
-        }
+        // // We have a non-entry/fatal URL, wait until we have data...
+        // if (this.state.database === null) {
+        //     return (
+        //         <div>
+        //             {header}
+        //             <div>Awaiting download of data...</div>
+        //         </div>
+        //     );
+        // }
 
         // URL: /individuals
         if (this.state.path === "/individuals") {
@@ -380,7 +381,8 @@ class App extends Component {
                 <div>
                     {header}
                     <Search
-                        database={this.state.database}
+                        // database={this.state.database}
+                        server={this.server}
                         callbacks={this.callbacks}
                     />
                 </div>
@@ -393,7 +395,7 @@ class App extends Component {
                 <div>
                     {header}
                     <EditIndividual
-                        database={this.state.database}
+                        server={this.server}
                         callbacks={this.callbacks}
                         canEdit={this.state.canEdit}
                     />
@@ -416,7 +418,7 @@ class App extends Component {
                         {header}
                         <IndividualDetail
                             individualId={id}
-                            database={this.state.database}
+                            server={this.server}
                             callbacks={this.callbacks}
                             canEdit={this.state.canEdit}
                         />
@@ -431,7 +433,7 @@ class App extends Component {
                         {header}
                         <EditIndividual
                             individualId={id}
-                            database={this.state.database}
+                            server={this.server}
                             callbacks={this.callbacks}
                         />
                     </div>

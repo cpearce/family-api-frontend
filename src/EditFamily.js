@@ -2,20 +2,13 @@ import React, { Component } from 'react';
 import './Editable.css';
 
 export class FamiliesOfList extends Component {
-    partnerInFamilies() {
-        const individual =
-            this.props.database.idToIndividual.get(this.props.individualId);
-        return individual ? individual.partner_in_families : [];
-    }
     render() {
-        const families = this.partnerInFamilies().map(
-            fid => (
+        const families = this.props.families.map(
+            family => (
                 <EditFamily
-                    key={"family-"+fid}
-                    database={this.props.database}
-                    callbacks={this.props.callbacks}
-                    individualId={this.props.individualId}
-                    familyId={fid}
+                    {...this.props}
+                    key={"family-"+family.id}
+                    family={family}
                 />
             )
         );
@@ -104,52 +97,36 @@ export class EditFamily extends Component {
     constructor(props) {
         super(props);
         this.handleInputChange = this.handleInputChange.bind(this);
-        this.state = this.initialState();
-        this.partner_options =
-            this.props.database.individuals
-                // Individuals other than the individualId
-                .filter(i => i.id !== this.props.individualId)
-                // Mapped to their name and id
-                .map(i => [i.id, i.last_name + ", " + i.first_names]);
-        sortOptionsByLastName(this.partner_options);
+        // this.state = this.initialState();
+        this.partner_options = [];
+        // this.partner_options =
+        //     this.props.database.individuals
+        //         // Individuals other than the individualId
+        //         .filter(i => i.id !== this.props.individualId)
+        //         // Mapped to their name and id
+        //         .map(i => [i.id, i.last_name + ", " + i.first_names]);
+        // sortOptionsByLastName(this.partner_options);
         this.addChildCallback = this.addChildCallback.bind(this);
         this.removeChild = this.removeChild.bind(this);
         this.removeFamily = this.removeFamily.bind(this);
         this.save = this.save.bind(this);
-    }
-
-    initialState() {
-        const family = this.getFamily(this.props.familyId);
-        console.log(family);
-        if (family) {
-            const partner = family.partners.length === 0 ? 0
-                : family.partners.filter(id => id !== this.props.individualId)[0];
-            return {
-                id: family.id,
-                married_date: family.married_date || "",
-                married_location: family.married_location || "",
-                partner: partner,
-                children: family.children.concat(), // Copy.
-            };
-        }
-        return {
-            id: this.props.familyId,
-            married_date: "", // null?
-            married_location: "",
+        this.state = {
+            id: this.props.family.id,
+            married_date: this.props.family.married_date,
+            married_location: this.props.family.married_location,
             individualId: this.props.individualId.id,
-            partner: 0,
-            children: [],
+            spouse: this.props.family.spouse,
+            children: this.props.family.children,
         };
     }
 
-    nameOf(id) {
-        const individual = this.props.database.idToIndividual.get(id);
+    nameOf(individual) {
         return !individual ? "" : individual.last_name + ", " + individual.first_names;
     }
 
-    removeChild(id) {
+    removeChild(child) {
         this.setState((state, props) => {
-            state.children = state.children.filter(childId => childId !== id);
+            state.children = state.children.filter(kid => kid.id !== child.id);
             return state;
         });
     }
@@ -183,11 +160,11 @@ export class EditFamily extends Component {
         console.log("Render children: " + this.state.children);
 
         const children_in_family = this.state.children.map(
-            id => (
-                <li key={"child-"+id}>
-                    {this.nameOf(id)}
+            child => (
+                <li key={"child-" + child.id}>
+                    {this.nameOf(child)}
                     <button
-                        onClick={() => this.removeChild(id) }
+                        onClick={() => this.removeChild(child) }
                         title="Remove a child from a family. Does not delete the child from the database.">
                             Remove from family
                     </button>
@@ -258,19 +235,20 @@ export class EditFamily extends Component {
     }
 
     addChildOptions() {
-        // List of ids of individuals to not include as potential children.
-        const exclude = [
-            this.state.partner,
-            this.props.individualId.id,
-            ...this.state.children
-        ];
-        let options = this.props.database.individuals
-            // ids which aren't in the exclude list
-            .filter(id => !exclude.includes(id))
-            // Convert to [id, name]
-            .map(i => [i.id, i.last_name + ", " + i.first_names]);
-        sortOptionsByLastName(options);
-        return options;
+        return [];
+        // // List of ids of individuals to not include as potential children.
+        // const exclude = [
+        //     this.state.partner,
+        //     this.props.individualId.id,
+        //     ...this.state.children
+        // ];
+        // let options = this.props.database.individuals
+        //     // ids which aren't in the exclude list
+        //     .filter(id => !exclude.includes(id))
+        //     // Convert to [id, name]
+        //     .map(i => [i.id, i.last_name + ", " + i.first_names]);
+        // sortOptionsByLastName(options);
+        // return options;
     }
 
     addChildCallback(id) {
@@ -280,14 +258,6 @@ export class EditFamily extends Component {
             console.log("Children: " + state.children);
             return state;
         });
-    }
-
-    getIndividual(id) {
-        return this.props.database.idToIndividual.get(id);
-    }
-
-    getFamily(id) {
-        return this.props.database.idToFamily.get(id);
     }
 
     handleInputChange(event) {
