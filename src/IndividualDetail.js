@@ -1,15 +1,6 @@
 import React, { Component } from 'react';
+import {nameAndLifetimeOf} from './Utils.js';
 
-function lifetime(individual) {
-    if (!individual.birth_date && !individual.death_date) {
-        return "";
-    }
-    return "("
-        + (individual.birth_date || "?")
-        + " - "
-        + (individual.death_date || "?")
-        + ")";
-}
 
 function formatEvent(date, location) {
     if (!date && !location) {
@@ -28,11 +19,7 @@ function formatEvent(date, location) {
     return s;
 }
 
-function nameAndLifetimeOf(individual) {
-    const l = lifetime(individual);
-    return individual.first_names + " " +
-        individual.last_name + (l ? (" - " + l) : "");
-}
+
 
 function formatChildren(familyId, children, detailCallback) {
     if (children.length === 0) {
@@ -40,7 +27,7 @@ function formatChildren(familyId, children, detailCallback) {
     }
     const f = (child) => (
         <li key={familyId + "-" + child.id}>
-            <button onClick={() => detailCallback(child.id)}>
+            <button onClick={() => detailCallback(child)}>
                 {nameAndLifetimeOf(child)}
             </button>
         </li>
@@ -63,7 +50,7 @@ function formatFamilies(individualId, families, detailCallback, idToIndividual) 
             <li key={family.id}>
                 <div className="spouse">
                     Partner:
-                    <button onClick={() => detailCallback(spouse.id)}>
+                    <button onClick={() => detailCallback(spouse)}>
                         {nameAndLifetimeOf(spouse)}
                     </button>
                 </div>
@@ -85,7 +72,7 @@ function formatFamilies(individualId, families, detailCallback, idToIndividual) 
 function formatParents(parents, detailCallback) {
     const f = (p) => (
         <li key={"parent-" + p.id}>
-            <button onClick={() => detailCallback(p.id)}>{
+            <button onClick={() => detailCallback(p)}>{
                 nameAndLifetimeOf(p)}
             </button>
         </li>
@@ -105,9 +92,13 @@ export class IndividualDetail extends Component {
         super(props);
         this.state = {
         };
-        this.init();
+        this.retrieving = false;
     }
-    async init() {
+    async retrieve() {
+        if (this.retrieving) {
+            return;
+        }
+        this.retrieving = true;
         try {
             const data = await this.props.server.verboseIndividual(this.props.individualId);
             this.setState({
@@ -117,9 +108,11 @@ export class IndividualDetail extends Component {
         } catch (e) {
             this.props.callbacks.error(e.message + e.fileName + e.lineNumber);
         }
+        this.retrieving = false;
     }
     render() {
-        if (!this.state.data) {
+        if (!this.state.data || this.state.data.individual.id !== this.props.individualId) {
+            this.retrieve();
             return (
                 <div>
                     Retrieving data...
@@ -136,7 +129,7 @@ export class IndividualDetail extends Component {
         const buried = formatEvent(individual.buried_date, individual.buried_location);
         const editButton = !this.props.canEdit ? null : (
             <div>
-                <button onClick={() => this.props.callbacks.edit(individual.id)}>
+                <button onClick={() => this.props.callbacks.edit(individual)}>
                     Edit
                 </button>
             </div>

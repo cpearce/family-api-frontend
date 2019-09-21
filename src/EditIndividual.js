@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import { FamiliesOfList } from './EditFamily.js';
+import { SearchToSelectFamily } from './SearchToSelect.js';
+import './Editable.css';
+
 
 export class EditIndividual extends Component {
     constructor(props) {
@@ -10,55 +13,43 @@ export class EditIndividual extends Component {
         this.save = this.save.bind(this);
         this.cancel = this.cancel.bind(this);
         this.deleteIndividual = this.deleteIndividual.bind(this);
-        this.init();
+        this.addFamilyCallback = this.addFamilyCallback.bind(this);
+        this.deleteFamilyCallback = this.deleteFamilyCallback.bind(this);
+        this.setChildOfFamily = this.setChildOfFamily.bind(this);
+
+        this.invalidate();
+
+        if (!this.props.callbacks.error) {
+            throw TypeError("Need error callback");
+        }
+        this.retrieving = false;
     }
-    async init() {
+    async invalidate() {
+        if (this.retrieving) {
+            return;
+        }
+        this.retrieving = true;
         try {
             // Should be cached if we came from the view individual screen...
             const data = await this.props.server.verboseIndividual(this.props.individualId);
+            const individual = data.individual;
             this.setState({
-                data: data
+                data: data,
+                id: individual.id || 0,
+                first_names: individual.first_names || "",
+                last_name: individual.last_name || "",
+                sex: individual.sex || "?",
+                birth_date: individual.birth_date || "",
+                birth_location: individual.birth_location || "",
+                death_date: individual.death_location || "",
+                death_location: individual.death_location || "",
+                occupation: individual.occupation || "",
+                child_in_family: individual.child_in_family || 0,
             });
         } catch (e) {
-            this.props.callbacks.error(e.message + e.fileName + e.lineNumber);
+            this.props.callbacks.error(e);
         }
-/*
-        const individual = (id) => {
-            return props.database.idToIndividual.get(id);
-        }
-
-        const partnersOf = (f) => {
-            // Make a copy of the partners list.
-            let partners = f.partners.slice();
-            // Partners list is a list of individuals' ids.
-            // Sort partners list so the male partner is first.
-            let cmp = (a, b) => {
-                return individual(a).sex > individual(b).sex;
-            };
-            partners.sort(cmp);
-            // Convert names to lastname + firstname.
-            const names = partners.map(
-                (id) => {
-                    const i = individual(id);
-                    return i.last_name + ", " + i.first_names;
-                }
-            );
-            // Ensure if the spouse is unknown, we render something that makes
-            // that obvious.
-            while (names.length < 2) {
-                names.push("Unknown");
-            }
-            return names.join(" & ");
-        };
-        this.child_in_family_options =
-            [[0, ""]].concat(
-            props.database.families.map(
-                (f) => [f.id, partnersOf(f)]
-            ));
-        this.child_in_family_options.sort((a,b) => a[1].localeCompare(b[1]));
-
-        console.log(individual(this.props.individualId));
-        */
+        this.retrieving = false;
     }
 
     handleInputChange(event) {
@@ -68,21 +59,18 @@ export class EditIndividual extends Component {
     }
 
     deleteIndividual() {
-        /*
-        if (!this.props.individualId) {
+        if (!this.props.individualId || !this.state.data || !this.state.data.individual) {
             return;
         }
         const msg =
             "Do you really want to delete this\n" +
             "individual from the database?";
         if (window.confirm(msg)) {
-            this.props.callbacks.deleteIndividual(this.props.individualId);
+            this.props.callbacks.deleteIndividual(this.state.data.individual);
         }
-        */
     }
 
-    save() {
-        /*
+    async save() {
         // Make a copy of individual's data, with fields in a format
         // suitable for sending to server.
         const stringFields = [
@@ -114,28 +102,44 @@ export class EditIndividual extends Component {
             data.sex = "?";
         }
 
-        this.props.callbacks.save(data);
-        */
+        try {
+            await this.props.server.saveIndividual(data);
+        } catch (e) {
+            this.props.callbacks.error(e);
+        }
+
+    }
+
+    async addFamilyCallback(partnerIds) {
+        await this.props.callbacks.addFamily(partnerIds);
+        // Adding a new family will cause data change. So re-fretch the data.
+        await this.invalidate();
+    }
+
+    async deleteFamilyCallback(familyId) {
+        await this.props.callbacks.deleteFamily(familyId);
+        await this.invalidate();
     }
 
     cancel() {
-        this.props.callbacks.detail(this.props.individualId);
+        this.props.callbacks.detail(this.state.data.individual);
+    }
+
+    async setChildOfFamily(family) {
+        this.setState((state, props) => {
+            state.data.child_in_family = family.id;
+            state.data.parents_family = family;
+            return state;
+        });
     }
 
     render() {
-        const child_in_family_options = null;
-        /*
-        const child_in_family_options = this.child_in_family_options.map(
-            f => (
-                <option key={f[0]} value={f[0]}>{f[1]}</option>
-            )
-        );
-        */
         const maybeDeleteButton = !this.props.individualId ? null : (
             <button onClick={this.deleteIndividual}>Delete Individual</button>
         );
 
-        if (!this.state.data) {
+        if (!this.state.data || this.state.id !== this.props.individualId) {
+            this.invalidate();
             return (
                 <div>
                     Awaiting data download...
@@ -143,18 +147,18 @@ export class EditIndividual extends Component {
             );
         }
 
-        const individual = this.state.data.individual;
-
+        // const individual = this.state.data.individual;
+        const parents_family_name = this.state.data.parents_family ? this.state.data.parents_family.name : "Unknown";
         return (
             <div>
                 <div>
-                    ID: {individual.id}
+                    ID: {this.state.id}
                 </div>
                 <div>
                     <label htmlFor="last_name">Last Name:</label>
                     <input
                         type="text"
-                        value={individual.last_name}
+                        value={this.state.last_name}
                         id="last_name"
                         onChange={this.handleInputChange}
                     />
@@ -163,7 +167,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="first_names">First Names:</label>
                     <input
                         type="text"
-                        value={individual.first_names}
+                        value={this.state.first_names}
                         id="first_names"
                         onChange={this.handleInputChange}
                     />
@@ -172,7 +176,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="sex">Sex:</label>
                     <select
                         id="sex"
-                        value={individual.sex}
+                        value={this.state.sex}
                         onChange={this.handleInputChange}
                     >
                         <option value="M">Male</option>
@@ -184,7 +188,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="birth_date">Birth Date:</label>
                     <input
                         type="date"
-                        value={individual.birth_date}
+                        value={this.state.birth_date}
                         id="birth_date"
                         onChange={this.handleInputChange}
                     />
@@ -193,7 +197,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="birth_location">Birth Location:</label>
                     <input
                         type="text"
-                        value={individual.birth_location}
+                        value={this.state.birth_location}
                         id="birth_location"
                         onChange={this.handleInputChange}
                     />
@@ -202,7 +206,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="death_date">Death Date:</label>
                     <input
                         type="date"
-                        value={individual.death_date}
+                        value={this.state.death_date}
                         id="death_date"
                         onChange={this.handleInputChange}
                     />
@@ -211,7 +215,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="death_location">Death Location:</label>
                     <input
                         type="text"
-                        value={individual.death_location}
+                        value={this.state.death_location}
                         id="death_location"
                         onChange={this.handleInputChange}
                     />
@@ -220,7 +224,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="buried_date">Buried Date:</label>
                     <input
                         type="date"
-                        value={individual.buried_date}
+                        value={this.state.buried_date}
                         id="buried_date"
                         onChange={this.handleInputChange}
                     />
@@ -229,7 +233,7 @@ export class EditIndividual extends Component {
                     <label htmlFor="buried_location">Buried Location:</label>
                     <input
                         type="text"
-                        value={individual.buried_location}
+                        value={this.state.buried_location}
                         id="buried_location"
                         onChange={this.handleInputChange}
                     />
@@ -238,20 +242,20 @@ export class EditIndividual extends Component {
                     <label htmlFor="occupation">Occupation:</label>
                     <input
                         type="text"
-                        value={individual.occupation}
+                        value={this.state.occupation}
                         id="occupation"
                         onChange={this.handleInputChange}
                     />
                 </div>
                 <div>
-                    <label htmlFor="child_in_family">Child of family:</label>
-                    <select
-                        id="child_in_family"
-                        value={individual.child_in_family}
-                        onChange={this.handleInputChange}
-                    >
-                        {child_in_family_options}
-                    </select>
+                    <SearchToSelectFamily
+                        furledLabel={"Child of: " + (parents_family_name)}
+                        unfurledLabel="Search for parents"
+                        text="Change"
+                        callback={this.setChildOfFamily}
+                        error={this.props.error}
+                        server={this.props.server}
+                    />
                 </div>
                 <div>
                     <button onClick={this.save}>Save Changes</button>
@@ -259,9 +263,13 @@ export class EditIndividual extends Component {
                     {maybeDeleteButton}
                 </div>
                 <FamiliesOfList
-                    {...this.props.callbacks}
+                    server={this.props.server}
                     individualId={this.props.individualId}
                     families={this.state.data.families}
+                    addFamilyCallback={this.addFamilyCallback}
+                    deleteFamilyCallback={this.deleteFamilyCallback}
+                    error={this.props.callbacks.error}
+                    invalidate={this.invalidate}
                 />
             </div>
         );

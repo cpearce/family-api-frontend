@@ -1,24 +1,29 @@
 import React, { Component } from 'react';
+import {assertHasProps, lifetime} from './Utils.js'
 
-function lifetime(individual) {
-    if (!individual.birth_date && !individual.death_date) {
-        return "";
-    }
-    return "("
-        + (individual.birth_date || "?")
-        + " - "
-        + (individual.death_date || "?")
-        + ")";
-}
 
-export class Search extends Component {
-    constructor(props) {
+const SEARCH_TYPE = {
+    FAMILY: 1,
+    INDIVIDUAL: 2,
+};
+
+class Search extends Component {
+    constructor(props, massage, type) {
         super(props);
+        assertHasProps(props, [
+            'server',
+            'selectedCallback',
+            'label',
+        ]);
+        this.massage = massage;
+        this.type = type;
+        if (this.type !== SEARCH_TYPE.INDIVIDUAL && this.type !== SEARCH_TYPE.FAMILY) {
+            throw TypeError("Invalid Search type.");
+        }
         this.state = {
             query: "",
             results: [],
         };
-        this.detailCallback = props.callbacks.detail;
         this.handleQueryChange = this.handleQueryChange.bind(this);
         this.searchCount = 0;
         this.timeout = null;
@@ -39,11 +44,24 @@ export class Search extends Component {
         );
     }
 
+    postSearch(query) {
+        if (query === "") {
+            return [];
+        }
+        if (this.type === SEARCH_TYPE.INDIVIDUAL) {
+            return this.props.server.searchIndividuals(query);
+        }
+        if (this.type === SEARCH_TYPE.FAMILY) {
+            return this.props.server.searchFamilies(query);
+        }
+        throw TypeError("Invalid Search type.");
+    }
+
     async search(query) {
         this.searchCount++;
         const searchCount = this.searchCount;
         try {
-            const results = await this.props.server.searchIndividuals(query);
+            const results = await this.postSearch(query);
             if (searchCount !== this.searchCount) {
                 // Another search has started. Ignore result.
                 return;
@@ -52,24 +70,21 @@ export class Search extends Component {
                 results: results,
             })
         } catch (e) {
-            this.props.callbacks.error(e.message);
+            this.props.errorCallbacks(e.message);
         }
     }
 
     render() {
         const searchResults = this.state.results.map(
-            (i) => {
-                const name = i.first_names + " " + i.last_name + " " + lifetime(i);
-                return (
-                    <li key={i.id}>
-                        <button onClick={() => this.detailCallback(i.id)}>{name}</button>
-                    </li>
-                )
-            }
+           (i) => this.massage(i, this.props.selectedCallback)
         );
+        const cancelButton = this.props.cancelButtonCallback && this.props.cancelButtonText
+            ? (
+                <button onClick={this.props.cancelButtonCallback}>{this.props.cancelButtonText}</button>
+            ) : null;
         return (
             <div>
-                <label htmlFor="search-box">Search individuals:</label>
+                <label htmlFor="search-box">{this.props.label}:</label>
                 <input
                     name="query"
                     type="text"
@@ -78,8 +93,37 @@ export class Search extends Component {
                     value={this.state.query}
                     onChange={this.handleQueryChange}
                 />
+                {cancelButton}
                 <ul>{searchResults}</ul>
             </div>
         );
+    }
+}
+
+function individual_to_str(i, callback) {
+    const name = i.first_names + " " + i.last_name + " " + lifetime(i);
+    return (
+        <li key={"individual_search"+i.id}>
+            <button onClick={() => callback(i)}>{name}</button>
+        </li>
+    )
+}
+
+export class SearchIndividuals extends Search {
+    constructor(props) {
+        super(props, individual_to_str, SEARCH_TYPE.INDIVIDUAL);
+    }
+}
+
+function family_to_str(f, callback) {
+    return (
+        <li key={"family_search"+f.id}>
+            <button onClick={() => callback(f)}>{f.name}</button>
+        </li>
+    )
+}
+export class SearchFamilies extends Search {
+    constructor(props) {
+        super(props, family_to_str, SEARCH_TYPE.FAMILY);
     }
 }

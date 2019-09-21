@@ -124,13 +124,13 @@ export class ServerConnection {
         const data = await this.downloadJsonData(INDIVIDUALS_URL + id + "/verbose");
         this.updateCache([data.individual, ...data.parents]);
         for (const family of data.families) {
-            this.updateCache([family.spouse, ...family.children]);
+            this.updateCache([family.spouse || [], ...family.children]);
         }
         return data;
     }
 
     async searchIndividuals(query) {
-        console.log("Search " + query);
+        console.log("Search Individuals: " + query);
         const url = backend_server + "search-individuals/" + query;
         const init = {
             method: 'GET',
@@ -154,6 +154,33 @@ export class ServerConnection {
         const individuals = await response.json();
         this.updateCache(individuals);
         return individuals;
+    }
+
+    async searchFamilies(query) {
+        console.log("Search Families: " + query);
+        const url = backend_server + "families/search/" + query + "/";
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+
+        let response = await fetch(url, init);
+        if (response.status === 401) {
+            // Unauthorized. Token may have expired.
+            this.logout();
+        }
+        console.log("Search " + url + " response status: " + response.status);
+        if (!response.ok) {
+            throw new Error("Search failed with status: " + response.status);
+        }
+        const families = await response.json();
+        // this.updateCache(individuals);
+        return families;
     }
 
     updateCache(individuals) {
@@ -219,11 +246,12 @@ export class ServerConnection {
         }
     }
 
-    async newFamily(partnerId) {
+    async newFamily(partnerIds) {
+        console.log(`ServerConnection.newFamily(${partnerIds}) typeof=${typeof(partnerIds)}`);
         let method = "POST";
         const url = backend_server + "families/";
         const family = {
-            partners: [partnerId],
+            partners: partnerIds,
             children: [],
         };
         const init = {

@@ -1,6 +1,6 @@
 import { LoginBox } from './LoginBox.js';
 import React, { Component } from 'react';
-import { Search } from './Search.js';
+import { SearchIndividuals } from './Search.js';
 import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
 import { ServerConnection } from './ServerConnection.js';
@@ -113,33 +113,20 @@ class App extends Component {
             this.navigate("Family Tree", "/login");
             return;
         }
-        // Connected. Try to download data. This is fatal if it fails.
-        // try {
-        //     this.setData(await this.server.ensureDataDownloaded());
-        // } catch (e) {
-        //     this.error("Failed to download data.");
-        // }
     }
 
-    // setData(data) {
-    //     this.setState({
-    //         database: {
-    //             individuals: data.individuals,
-    //             families: data.families,
-    //             idToIndividual: listToMap(data.individuals),
-    //             idToFamily: listToMap(data.families),
-    //         },
-    //     });
-    // }
-
-    error(message) {
-        console.log("error: " + message);
-        const path = "/error"
-        window.history.pushState({}, "Error", path);
-        this.setState({
-            path: path,
-            error: message
-        });
+    error(e) {
+        if (e.hasOwnProperty("message") && e.hasOwnProperty("lineNumber") && e.hasOwnProperty("fileName")) {
+            console.log(`Exception: '${e.message} ${e.fileName}:${e.lineNumber}`)
+        } else {
+            console.log("error: " + e);
+        }
+        // const path = "/error"
+        // window.history.pushState({}, "Error", path);
+        // this.setState({
+        //     path: path,
+        //     error: e,
+        // });
     }
 
     async login(username, password) {
@@ -152,7 +139,6 @@ class App extends Component {
             let account = await this.server.checkAccount();
             console.log("Can edit: " + account.can_edit);
             this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
-            // this.setData(await this.server.ensureDataDownloaded());
         } catch (e) {
             this.error("Login Failed: " + e.message);
         } finally {
@@ -172,48 +158,12 @@ class App extends Component {
         }
     }
 
-    updateIndividual(individual) {
-        // Updates individual in local copy of DB to match.
-        // May need to add to DB if individual is new.
-        this.setState((state, props) => {
-            let individuals = this.state.database.individuals;
-            if (!this.state.database.idToIndividual.get(individual.id)) {
-                individuals.push(individual);
-            } else {
-                for (let i = 0; i < individuals.length; i++) {
-                    if (individuals[i].id === individual.id) {
-                        individuals[i] = individual;
-                        break;
-                    }
-                }
-            }
-            this.state.database.idToIndividual.set(individual.id, individual);
-            return state;
-        });
-    }
-
     async saveCallback(individual) {
-        try {
-            let updatedIndividual = await this.server.saveIndividual(individual);
-            this.updateIndividual(updatedIndividual);
-            this.detailCallback(updatedIndividual.id);
-        } catch (e) {
-            this.error(e.message);
-        }
     }
 
-    async deleteIndividual(individualId) {
+    async deleteIndividual(individual) {
         try {
-            await this.server.deleteIndividual(individualId);
-            // Update our copy of the database after changes.
-            this.setState((state, props) => {
-                this.state.database.individuals = this.state.database.individuals.filter(
-                    (i) => i.id !== individualId
-                );
-                this.state.database.idToIndividual.delete(individualId);
-                return state;
-            });
-
+            await this.server.deleteIndividual(individual.id);
             this.searchIndividuals();
         } catch (e) {
             this.error(e.message);
@@ -224,47 +174,16 @@ class App extends Component {
         try {
             const individual = await this.server.newIndividual()
             console.log("Created individual " + individual.id);
-            this.updateIndividual(individual);
+            this.editCallback(individual);
             this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
         } catch (e) {
             this.error(e.message);
         }
     }
 
-    updateFamily(family) {
-        // Updates individual in local copy of DB to match.
-        // May need to add to DB if individual is new.
-        this.setState((state, props) => {
-            let families = this.state.database.families;
-            if (!this.state.database.idToFamily.get(family.id)) {
-                families.push(family);
-            } else {
-                for (let i = 0; i < families.length; i++) {
-                    if (families[i].id === family.id) {
-                        families[i] = family;
-                        break;
-                    }
-                }
-            }
-            this.state.database.idToFamily.set(family.id, family);
-            // Ensure all partners in the family have the family id
-            // in their partners_in_family list.
-            for (const individualId of family.partners) {
-                let individual = this.state.database.idToIndividual.get(individualId);
-                if (!contains(individual.partner_in_families, family.id)) {
-                    individual.partner_in_families.push(family.id);
-                }
-            }
-            return state;
-        });
-    }
-
-    async addFamilyCallback(partnerId) {
+    async addFamilyCallback(partnerIds) {
         try {
-            console.log("Creating family for partner=" + partnerId);
-            const family = await this.server.newFamily(partnerId);
-            console.log("Created family " + family.id);
-            this.updateFamily(family);
+            const family = await this.server.newFamily(partnerIds);
         } catch (e) {
             this.error(e.message);
         }
@@ -274,30 +193,16 @@ class App extends Component {
         try {
             console.log("Saving family " + family.id);
             family = await this.server.saveFamily(family);
-            this.updateFamily(family);
+            // this.updateFamily(family);
         } catch (e) {
             this.error(e.message);
         }
     }
 
     async deleteFamily(familyId) {
+        console.log("deleteFamily is passed a familyId rather than an object");
         try {
             await this.server.deleteFamily(familyId);
-            // Update our copy of the database after changes.
-            this.setState((state, props) => {
-                this.state.database.families = this.state.database.families.filter(
-                    i => i.id !== familyId
-                );
-                const family = this.state.database.idToFamily.get(familyId);
-                for (const id of family.partners) {
-                    let individual = this.state.database.idToIndividual.get(id);
-                    individual.partner_in_families = individual.partner_in_families.filter(
-                        id => id !== family.id
-                    );
-                }
-                this.state.database.idToFamily.delete(familyId);
-                return state;
-            });
         } catch (e) {
             this.error(e.message);
         }
@@ -307,20 +212,25 @@ class App extends Component {
         this.navigate("Individuals", "/individuals");
     }
 
-    detailCallback(individualId) {
-        this.navigate("Individual detail", "/individuals/" + individualId);
+    detailCallback(individual) {
+        if (!individual) {
+            console.log("Error: detailCallback called with null individual.");
+            return;
+        }
+        this.navigate("Individual detail", "/individuals/" + individual.id);
     }
 
-    editCallback(individualId) {
-        console.log("edit " + individualId);
+    editCallback(individual) {
+        console.log("edit " + individual.id);
         if (this.state.canEdit) {
-            this.navigate("Edit Individual", "/individuals/" + individualId + "/edit");
+            this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
         } else {
             this.error("Tried to edit, but you don't have edit privileges!");
         }
     }
 
     navigate(title, path, otherState={}) {
+        console.log("Navigate " + path);
         window.history.pushState({}, title, path);
         this.setState({
             ...otherState,
@@ -365,25 +275,16 @@ class App extends Component {
             );
         }
 
-        // // We have a non-entry/fatal URL, wait until we have data...
-        // if (this.state.database === null) {
-        //     return (
-        //         <div>
-        //             {header}
-        //             <div>Awaiting download of data...</div>
-        //         </div>
-        //     );
-        // }
-
         // URL: /individuals
         if (this.state.path === "/individuals") {
             return (
                 <div>
                     {header}
-                    <Search
-                        // database={this.state.database}
+                    <SearchIndividuals
+                        label="Search individuals"
                         server={this.server}
-                        callbacks={this.callbacks}
+                        selectedCallback={this.callbacks.detail}
+                        errorCallback={this.callbacks.error}
                     />
                 </div>
             );
