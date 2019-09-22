@@ -107,7 +107,7 @@ export class EditFamily extends Component {
                 console.log("Saving family " + data.id);
                 await this.props.server.saveFamily(data);
             } catch (e) {
-                this.error(e.message);
+                this.props.error(e.message);
             }
         }
     }

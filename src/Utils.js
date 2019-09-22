@@ -7,7 +7,6 @@ export function assertHasProps(obj, props) {
 }
 
 export function nameOf(individual) {
-    // TODO: Include lifetime in this!
     return individual ? individual.last_name + ", " + individual.first_names : "Unknown";
 }
 
@@ -25,4 +24,13 @@ export function lifetime(individual) {
 export function nameAndLifetimeOf(individual) {
     const l = lifetime(individual);
     return nameOf(individual) + (l ? (" - " + l) : "");
+}
+
+export function contains(collection, element) {
+    for (const value of collection) {
+        if (value === element) {
+            return true;
+        }
+    }
+    return false;
 }

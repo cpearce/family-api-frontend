@@ -3,56 +3,9 @@ import React, { Component } from 'react';
 import { SearchIndividuals } from './Search.js';
 import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
+import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
 import './App.css';
-
-function Header(props) {
-    const isLoginPage = window.location.pathname === "/" ||
-                        window.location.pathname === "/login";
-    const items = isLoginPage ? [] : [
-        { text: "Individuals", click: props.callbacks.search, path: "/individuals" },
-        ...(props.canEdit ? [{ text: "Add", click: props.callbacks.addIndividual, path: "/individuals/add" }] : []),
-        { text: "Logout", click: props.callbacks.logout, path: "" },
-    ];
-
-    const navBarItems = items.map(
-        (item) => (
-            <li key={"navbar-" + item.text} className="nav-item">
-                <button
-                    disabled={(item.path === window.location.pathname)}
-                    className="nav-button"
-                    onClick={item.click}
-                >
-                    {item.text}
-                </button>
-            </li>
-        )
-    );
-
-    return (
-        <ul className="navbar">
-            <li className="navbar-brand">
-                Family Tree
-            </li>
-            {navBarItems}
-        </ul>
-    )
-}
-
-// function listToMap(list) {
-//     return new Map(
-//         list.map((i) => [i.id, i])
-//     );
-// }
-
-function contains(collection, element) {
-    for (const value of collection) {
-        if (value === element) {
-            return true;
-        }
-    }
-    return false;
-}
 
 class App extends Component {
     constructor(props) {
@@ -72,12 +25,6 @@ class App extends Component {
             search: this.searchIndividuals.bind(this),
             detail: this.detailCallback.bind(this),
             edit: this.editCallback.bind(this),
-            save: this.saveCallback.bind(this),
-            addIndividual: this.addIndividualCallback.bind(this),
-            deleteIndividual: this.deleteIndividual.bind(this),
-            addFamily: this.addFamilyCallback.bind(this),
-            saveFamily: this.saveFamily.bind(this),
-            deleteFamily: this.deleteFamily.bind(this),
             error: this.error.bind(this),
         };
 
@@ -153,56 +100,6 @@ class App extends Component {
         try {
             await this.server.logout();
             this.navigate("Family Tree: Login", "/login", { database: null });
-        } catch (e) {
-            this.error(e.message);
-        }
-    }
-
-    async saveCallback(individual) {
-    }
-
-    async deleteIndividual(individual) {
-        try {
-            await this.server.deleteIndividual(individual.id);
-            this.searchIndividuals();
-        } catch (e) {
-            this.error(e.message);
-        }
-    }
-
-    async addIndividualCallback() {
-        try {
-            const individual = await this.server.newIndividual()
-            console.log("Created individual " + individual.id);
-            this.editCallback(individual);
-            this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
-        } catch (e) {
-            this.error(e.message);
-        }
-    }
-
-    async addFamilyCallback(partnerIds) {
-        try {
-            const family = await this.server.newFamily(partnerIds);
-        } catch (e) {
-            this.error(e.message);
-        }
-    }
-
-    async saveFamily(family) {
-        try {
-            console.log("Saving family " + family.id);
-            family = await this.server.saveFamily(family);
-            // this.updateFamily(family);
-        } catch (e) {
-            this.error(e.message);
-        }
-    }
-
-    async deleteFamily(familyId) {
-        console.log("deleteFamily is passed a familyId rather than an object");
-        try {
-            await this.server.deleteFamily(familyId);
         } catch (e) {
             this.error(e.message);
         }

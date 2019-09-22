@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { FamiliesOfList } from './EditFamily.js';
 import { SearchToSelectFamily } from './SearchToSelect.js';
 import './Editable.css';
+import {nameAndLifetimeOf} from './Utils.js';
+
 
 
 export class EditIndividual extends Component {
@@ -58,15 +60,20 @@ export class EditIndividual extends Component {
         });
     }
 
-    deleteIndividual() {
-        if (!this.props.individualId || !this.state.data || !this.state.data.individual) {
+    async deleteIndividual() {
+        if (!this.props.individualId || !this.state.data || !this.state.id) {
             return;
         }
         const msg =
-            "Do you really want to delete this\n" +
-            "individual from the database?";
+            "Do you really want to delete\n" +
+            nameAndLifetimeOf(this.state.data.individual) + "?";
         if (window.confirm(msg)) {
-            this.props.callbacks.deleteIndividual(this.state.data.individual);
+            try {
+                await this.props.server.deleteIndividual(this.state.id);
+                this.props.callbacks.search();
+            } catch (e) {
+                this.props.callbacks.error(e.message);
+            }
         }
     }
 
@@ -111,13 +118,22 @@ export class EditIndividual extends Component {
     }
 
     async addFamilyCallback(partnerIds) {
-        await this.props.callbacks.addFamily(partnerIds);
+        try {
+            await this.props.server.newFamily(partnerIds);
+        } catch (e) {
+            this.props.callbacks.error(e.message);
+        }
         // Adding a new family will cause data change. So re-fretch the data.
         await this.invalidate();
     }
 
     async deleteFamilyCallback(familyId) {
-        await this.props.callbacks.deleteFamily(familyId);
+        console.log("deleteFamily is passed a familyId rather than an object");
+        try {
+            await this.props.server.deleteFamily(familyId);
+        } catch (e) {
+            this.props.error(e);
+        }
         await this.invalidate();
     }
 
@@ -266,6 +282,7 @@ export class EditIndividual extends Component {
                     server={this.props.server}
                     individualId={this.props.individualId}
                     families={this.state.data.families}
+                    callbacks={this.props.callbacks}
                     addFamilyCallback={this.addFamilyCallback}
                     deleteFamilyCallback={this.deleteFamilyCallback}
                     error={this.props.callbacks.error}
