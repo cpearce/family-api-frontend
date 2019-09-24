@@ -19,6 +19,8 @@ export class EditIndividual extends Component {
         this.deleteFamilyCallback = this.deleteFamilyCallback.bind(this);
         this.setChildOfFamily = this.setChildOfFamily.bind(this);
 
+        this.originalState = {};
+
         this.invalidate();
 
         if (!this.props.callbacks.error) {
@@ -35,7 +37,7 @@ export class EditIndividual extends Component {
             // Should be cached if we came from the view individual screen...
             const data = await this.props.server.verboseIndividual(this.props.individualId);
             const individual = data.individual;
-            this.setState({
+            const state = {
                 data: data,
                 id: individual.id || 0,
                 first_names: individual.first_names || "",
@@ -47,11 +49,22 @@ export class EditIndividual extends Component {
                 death_location: individual.death_location || "",
                 occupation: individual.occupation || "",
                 child_in_family: individual.child_in_family || 0,
-            });
+            };
+            this.setState(state);
+            this.originalState = state;
         } catch (e) {
             this.props.callbacks.error(e);
         }
         this.retrieving = false;
+    }
+
+    hasUnsavedChanges() {
+        for (const prop in this.originalState) {
+            if (this.state[prop] !== this.originalState[prop]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     handleInputChange(event) {
@@ -111,6 +124,9 @@ export class EditIndividual extends Component {
 
         try {
             await this.props.server.saveIndividual(data);
+            for (const prop in data) {
+                this.originalState[prop] = data[prop];
+            }
         } catch (e) {
             this.props.callbacks.error(e);
         }
@@ -274,8 +290,8 @@ export class EditIndividual extends Component {
                     />
                 </div>
                 <div>
-                    <button onClick={this.save}>Save Changes</button>
-                    <button onClick={this.cancel}>Discard Unsaved Changes</button>
+                    <button onClick={this.save} disabled={this.hasUnsavedChanges()}>Save Changes</button>
+                    <button onClick={this.cancel} disabled={this.hasUnsavedChanges()}>Discard Unsaved Changes</button>
                     {maybeDeleteButton}
                 </div>
                 <FamiliesOfList
