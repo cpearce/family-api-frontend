@@ -5,6 +5,18 @@ import './Editable.css';
 import {nameAndLifetimeOf} from './Utils.js';
 
 
+const MUTABLE_FIELDS = [
+    'first_names',
+    'last_name',
+    'sex',
+    'birth_date',
+    'birth_location',
+    'death_date',
+    'death_location',
+    'buried_location',
+    'occupation',
+    'child_in_family',
+];
 
 export class EditIndividual extends Component {
     constructor(props) {
@@ -13,7 +25,7 @@ export class EditIndividual extends Component {
         };
         this.handleInputChange = this.handleInputChange.bind(this);
         this.save = this.save.bind(this);
-        this.cancel = this.cancel.bind(this);
+        this.revert = this.revert.bind(this);
         this.deleteIndividual = this.deleteIndividual.bind(this);
         this.addFamilyCallback = this.addFamilyCallback.bind(this);
         this.deleteFamilyCallback = this.deleteFamilyCallback.bind(this);
@@ -45,21 +57,29 @@ export class EditIndividual extends Component {
                 sex: individual.sex || "?",
                 birth_date: individual.birth_date || "",
                 birth_location: individual.birth_location || "",
-                death_date: individual.death_location || "",
+                death_date: individual.death_date || "",
                 death_location: individual.death_location || "",
+                buried_location: individual.buried_location || "",
                 occupation: individual.occupation || "",
                 child_in_family: individual.child_in_family || 0,
             };
+            this.originalState = {};
+            this.setBaseState(state);
             this.setState(state);
-            this.originalState = state;
         } catch (e) {
             this.props.callbacks.error(e);
         }
         this.retrieving = false;
     }
 
+    setBaseState(obj) {
+        for (const prop of MUTABLE_FIELDS) {
+            this.originalState[prop] = obj[prop] || null;
+        }
+    }
+
     hasUnsavedChanges() {
-        for (const prop in this.originalState) {
+        for (const prop of MUTABLE_FIELDS) {
             if (this.state[prop] !== this.originalState[prop]) {
                 return true;
             }
@@ -153,8 +173,13 @@ export class EditIndividual extends Component {
         await this.invalidate();
     }
 
-    cancel() {
-        this.props.callbacks.detail(this.state.data.individual);
+    revert() {
+        this.setState((state, props) => {
+            for (const prop of MUTABLE_FIELDS) {
+                state[prop] = this.originalState[prop];
+            }
+            return state;
+        });
     }
 
     async setChildOfFamily(family) {
@@ -290,8 +315,8 @@ export class EditIndividual extends Component {
                     />
                 </div>
                 <div>
-                    <button onClick={this.save} disabled={this.hasUnsavedChanges()}>Save Changes</button>
-                    <button onClick={this.cancel} disabled={this.hasUnsavedChanges()}>Discard Unsaved Changes</button>
+                    <button onClick={this.save} disabled={!this.hasUnsavedChanges()}>Save changes</button>
+                    <button onClick={this.revert} disabled={!this.hasUnsavedChanges()}>Discard unsaved changes to individual</button>
                     {maybeDeleteButton}
                 </div>
                 <FamiliesOfList

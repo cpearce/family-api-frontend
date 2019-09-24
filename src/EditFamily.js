@@ -60,6 +60,7 @@ export class EditFamily extends Component {
         this.deleteFamily = this.deleteFamily.bind(this);
         this.setPartner = this.setPartner.bind(this);
         this.save = this.save.bind(this);
+        this.revert = this.revert.bind(this);
         this.state = {
             id: this.props.family.id,
             married_date: this.props.family.married_date || "",
@@ -68,10 +69,32 @@ export class EditFamily extends Component {
             spouse: this.props.family.spouse || "",
             children: this.props.family.children || [],
         };
+        this.originalState = {};
+        this.setBaseState(this.state);
+    }
 
-        if (this.props.server === undefined) {
-            throw TypeError("Expected server prop on EditFamily");
+    setBaseState(obj) {
+        for (const prop in obj) {
+            this.originalState[prop] = obj[prop];
         }
+    }
+
+    revert() {
+        this.setState((state, props) => {
+            for (const prop in this.originalState) {
+                state[prop] = this.originalState[prop];
+            }
+            return state;
+        });
+    }
+
+    hasUnsavedChanges() {
+        for (const prop in this.originalState) {
+            if (this.state[prop] !== this.originalState[prop]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     removeChild(child) {
@@ -106,10 +129,13 @@ export class EditFamily extends Component {
             try {
                 console.log("Saving family " + data.id);
                 await this.props.server.saveFamily(data);
+                this.setBaseState(data);
             } catch (e) {
                 this.props.error(e.message);
             }
         }
+
+
     }
 
     setPartner(individual) {
@@ -184,8 +210,8 @@ export class EditFamily extends Component {
                     </ul>
                 </div>
                 <div>
-                    <button onClick={this.save}>Save</button>
-                    <button onClick={this.revert}>Revert</button>
+                    <button onClick={this.save}  disabled={!this.hasUnsavedChanges()}>Save</button>
+                    <button onClick={this.revert} disabled={!this.hasUnsavedChanges()}>Discard unsaved changes to family</button>
                     <button onClick={this.deleteFamily}>Remove family</button>
                 </div>
             </div>
