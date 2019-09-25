@@ -34,6 +34,15 @@ class App extends Component {
             });
         }));
 
+        // Ensure we start at the login screen.
+        if (this.state.path === "/") {
+            // Note: We can't call our navigate() function here, as it calls
+            // setState(), which won't work in a constructor as we're not
+            // mounted yet.
+            this.state.path = "/login";
+            window.history.pushState({}, "Family Tree: Login", this.state.path);
+        }
+
         // If we have a stored access token, test it, and download
         // data. If we don't, or the token has expired, this will
         // cause us to show a login page.
@@ -41,18 +50,23 @@ class App extends Component {
         this.connect();
     }
 
+    isConnected() {
+        return this.state.canEdit !== null;
+    }
+
     async connect() {
         console.log("App.connect()");
         try {
             let account = await this.server.checkAccount();
             // Our stored token is still valid. Show the individuals list.
+            console.log("conect() succeeded");
             console.log("Can edit: " + account.can_edit);
+            this.setState({
+                canEdit: account.can_edit,
+            });
+            // Show search page after login.
             if (this.state.path === "/login") {
-                this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
-            } else {
-                this.setState({
-                    canEdit: account.can_edit,
-                });
+                this.searchIndividuals();
             }
         } catch (e) {
             // Stored token must have not worked. We should show a login page.
@@ -99,7 +113,7 @@ class App extends Component {
         console.log("logout");
         try {
             await this.server.logout();
-            this.navigate("Family Tree: Login", "/login", { database: null });
+            this.navigate("Family Tree: Login", "/login", {canEdit: null});
         } catch (e) {
             this.error(e.message);
         }
@@ -155,21 +169,23 @@ class App extends Component {
             );
         }
 
-        // URL: / or /login
-        if (this.state.path === "/" || this.state.path === "/login") {
+        // URL: /login
+        if (this.state.path === "/login") {
             if (this.state.loginInProgress) {
                 return (
                     <div>Logging in...</div>
                 );
             }
-            return (
-                <div>
-                    {header}
-                    <LoginBox
-                        login={this.callbacks.login}
-                    />
-                </div>
-            );
+            if (!this.isConnected()) {
+                return (
+                    <div>
+                        {header}
+                        <LoginBox
+                            login={this.callbacks.login}
+                        />
+                    </div>
+                );
+            }
         }
 
         // URL: /individuals
@@ -224,18 +240,20 @@ class App extends Component {
                 );
             }
 
-            if (chunks.length === 3 && chunks[2] === "edit") {
-                // URL: /individuals/$id/edit
-                return (
-                    <div>
-                        {header}
-                        <EditIndividual
-                            individualId={id}
-                            server={this.server}
-                            callbacks={this.callbacks}
-                        />
-                    </div>
-                );
+            if (chunks.length === 3) {
+                if (chunks[2] === "edit") {
+                    // URL: /individuals/$id/edit
+                    return (
+                        <div>
+                            {header}
+                            <EditIndividual
+                                individualId={id}
+                                server={this.server}
+                                callbacks={this.callbacks}
+                            />
+                        </div>
+                    );
+                }
             }
         }
 
