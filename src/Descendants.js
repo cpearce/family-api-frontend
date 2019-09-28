@@ -22,15 +22,55 @@ export class Descendants extends Component {
             y: 0.5,
         };
         this.downloadData();
-        this.keyUpHandler = this.keyUpHandler.bind(this);
+
+        this.eventHandlers = [
+            { event: 'keyup', handler: this.keyUpHandler.bind(this) },
+            { event: 'pointermove', handler: this.pointerMoveHandler.bind(this) },
+            { event: 'pointerdown', handler: this.pointerDownHandler.bind(this) },
+            { event: 'pointerup', handler: this.pointerUpHandler.bind(this) },
+        ];
+
+        this.isPointerDown = false;
     }
 
     componentDidMount() {
-        window.addEventListener('keyup', this.keyUpHandler);
+        for (const h of this.eventHandlers) {
+            window.addEventListener(h.event, h.handler);
+        }
     }
 
     componentWillUnmount() {
-        window.removeEventListener('keyup', this.keyUpHandler);
+        for (const h of this.eventHandlers) {
+            window.removeEventListener(h.event, h.handler);
+        }
+    }
+
+    pointerMoveHandler(e) {
+        if (!e.isPrimary || !this.isPointerDown) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        this.setState((state, props) => {
+            return {
+                x: Math.min(1.0, Math.max(0, state.x - (e.movementX / window.innerWidth))),
+                y: Math.min(1.0, Math.max(0, state.y - (e.movementY / window.innerHeight))),
+            }
+        });
+    }
+
+    pointerDownHandler(e) {
+        if (!e.isPrimary) {
+            return;
+        }
+        this.isPointerDown = true;
+    }
+
+    pointerUpHandler(e) {
+        if (!e.isPrimary) {
+            return;
+        }
+        this.isPointerDown = false;
     }
 
     keyUpHandler(e) {
