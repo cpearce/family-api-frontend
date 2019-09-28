@@ -13,157 +13,60 @@ const THIN = 1;
 const MAX_ZOOM = 10.0;
 const MIN_ZOOM = 0.0;
 
-export class Descendants extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            zoom: MAX_ZOOM,
-            x: 0.5,
-            y: 0.5,
+class DescendantsLoader {
+
+    // Throws on error.
+    async load(individualId, server) {
+
+        /*
+            Maps individual id to:
+            {
+                individual: {
+                    id: "xx",
+                    first_name "xx",
+                    last_name: "xx",
+                    birth_date: "xx",
+                    death_date: "xx"
+                    families: [
+                        {
+                            spouse: {
+                                id: "xx",
+                                first_name "xx",
+                                last_name: "xx",
+                                birth_date: "xx",
+                                death_date: "xx"
+                            },
+                            children: [
+                                id1, id2, ...
+                            ]
+                        }
+                    ]
+                },
+            }
+        */
+        let individuals = new Map();
+        for (const d of await server.descendants(individualId)) {
+            const individual = d.individual;
+            individual.families = d.families;
+            individuals.set(individual.id, individual);
+        }
+
+        const geometry = this.calculateGeometry(individuals, individualId);
+
+        let shapes = {
+            boxes: [],
+            lines: [],
+            text: [],
+            links: [],
         };
-        this.downloadData();
+        this.walkIndividual(0, 0, individualId, shapes, individuals);
 
-        this.eventHandlers = [
-            { event: 'keyup', handler: this.keyUpHandler.bind(this) },
-            { event: 'pointermove', handler: this.pointerMoveHandler.bind(this) },
-            { event: 'pointerdown', handler: this.pointerDownHandler.bind(this) },
-            { event: 'pointerup', handler: this.pointerUpHandler.bind(this) },
-        ];
-
-        this.isPointerDown = false;
-    }
-
-    componentDidMount() {
-        for (const h of this.eventHandlers) {
-            window.addEventListener(h.event, h.handler);
-        }
-    }
-
-    componentWillUnmount() {
-        for (const h of this.eventHandlers) {
-            window.removeEventListener(h.event, h.handler);
-        }
-    }
-
-    pointerMoveHandler(e) {
-        if (!e.isPrimary || !this.isPointerDown) {
-            return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        this.setState((state, props) => {
-            return {
-                x: Math.min(1.0, Math.max(0, state.x - (e.movementX / window.innerWidth))),
-                y: Math.min(1.0, Math.max(0, state.y - (e.movementY / window.innerHeight))),
-            }
-        });
-    }
-
-    pointerDownHandler(e) {
-        if (!e.isPrimary) {
-            return;
-        }
-        this.isPointerDown = true;
-    }
-
-    pointerUpHandler(e) {
-        if (!e.isPrimary) {
-            return;
-        }
-        this.isPointerDown = false;
-    }
-
-    keyUpHandler(e) {
-        console.log(`keyup ${e.key}`);
-        const key = e.key;
-        if (key === '+' || key === '=') {
-            this.setState((state, props) => {
-                state.zoom = Math.max(state.zoom - 1, MIN_ZOOM);
-                return state;
-            });
-        } else if (key === '-' || key === '_') {
-            this.setState((state, props) => {
-                state.zoom = Math.min(state.zoom + 1, MAX_ZOOM);
-                return state;
-            });
-        } else if (key === 'ArrowLeft') {
-            this.setState((state, props) => {
-                state.x = Math.max(state.x -= 0.05, 0.0);
-                return state;
-            });
-        } else if (key === 'ArrowRight') {
-            this.setState((state, props) => {
-                state.x = Math.min(state.x += 0.05, 1.0);
-                return state;
-            });
-        } else if (key === 'ArrowUp') {
-            this.setState((state, props) => {
-                state.y = Math.max(state.y -= 0.05, 0.0);
-                return state;
-            });
-        } else if (key === 'ArrowDown') {
-            this.setState((state, props) => {
-                state.y = Math.min(state.y += 0.05, 1.0);
-                return state;
-            });
-        }
-    }
-
-    async downloadData() {
-        try {
-            /*
-                Maps individual id to:
-                {
-                    individual: {
-                        id: "xx",
-                        first_name "xx",
-                        last_name: "xx",
-                        birth_date: "xx",
-                        death_date: "xx"
-                        families: [
-                            {
-                                spouse: {
-                                    id: "xx",
-                                    first_name "xx",
-                                    last_name: "xx",
-                                    birth_date: "xx",
-                                    death_date: "xx"
-                                },
-                                children: [
-                                    id1, id2, ...
-                                ]
-                            }
-                        ]
-                    },
-                }
-            */
-            let individuals = new Map();
-            for (const d of await this.props.server.descendants(this.props.individualId)) {
-                const individual = d.individual;
-                individual.families = d.families;
-                individuals.set(individual.id, individual);
-            }
-
-            const geometry = this.calculateGeometry(individuals, this.props.individualId);
-
-            let shapes = {
-                boxes: [],
-                lines: [],
-                text: [],
-                links: [],
-            };
-            this.walkIndividual(0, 0, this.props.individualId, shapes, individuals);
-
-            this.setState({
-                geometry: geometry,
-                shapes: shapes,
-                individuals: individuals,
-            });
-            console.log(`Downloaded ${individuals.size} individuals' data.`);
-
-        } catch (e) {
-            this.props.callbacks.error(e);
-        }
+        console.log(`Downloaded ${individuals.size} individuals' data.`);
+        return {
+            geometry: geometry,
+            shapes: shapes,
+            individuals: individuals,
+        };
     }
 
     calculateGeometry(individuals, rootId) {
@@ -380,6 +283,113 @@ export class Descendants extends Component {
             family_number++; // TODO: don't recalc this.
         }
     }
+}
+
+export class RelationalTree extends Component {
+    constructor(props, loader) {
+        super(props);
+        this.state = {
+            zoom: MAX_ZOOM,
+            x: 0.5,
+            y: 0.5,
+        };
+
+        this.downloadData(loader);
+
+        this.eventHandlers = [
+            { event: 'keyup', handler: this.keyUpHandler.bind(this) },
+            { event: 'pointermove', handler: this.pointerMoveHandler.bind(this) },
+            { event: 'pointerdown', handler: this.pointerDownHandler.bind(this) },
+            { event: 'pointerup', handler: this.pointerUpHandler.bind(this) },
+        ];
+
+        this.isPointerDown = false;
+    }
+
+    componentDidMount() {
+        for (const h of this.eventHandlers) {
+            window.addEventListener(h.event, h.handler);
+        }
+    }
+
+    componentWillUnmount() {
+        for (const h of this.eventHandlers) {
+            window.removeEventListener(h.event, h.handler);
+        }
+    }
+
+    pointerMoveHandler(e) {
+        if (!e.isPrimary || !this.isPointerDown) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        this.setState((state, props) => {
+            return {
+                x: Math.min(1.0, Math.max(0, state.x - (e.movementX / window.innerWidth))),
+                y: Math.min(1.0, Math.max(0, state.y - (e.movementY / window.innerHeight))),
+            }
+        });
+    }
+
+    pointerDownHandler(e) {
+        if (!e.isPrimary) {
+            return;
+        }
+        this.isPointerDown = true;
+    }
+
+    pointerUpHandler(e) {
+        if (!e.isPrimary) {
+            return;
+        }
+        this.isPointerDown = false;
+    }
+
+    keyUpHandler(e) {
+        console.log(`keyup ${e.key}`);
+        const key = e.key;
+        if (key === '+' || key === '=') {
+            this.setState((state, props) => {
+                state.zoom = Math.max(state.zoom - 1, MIN_ZOOM);
+                return state;
+            });
+        } else if (key === '-' || key === '_') {
+            this.setState((state, props) => {
+                state.zoom = Math.min(state.zoom + 1, MAX_ZOOM);
+                return state;
+            });
+        } else if (key === 'ArrowLeft') {
+            this.setState((state, props) => {
+                state.x = Math.max(state.x -= 0.05, 0.0);
+                return state;
+            });
+        } else if (key === 'ArrowRight') {
+            this.setState((state, props) => {
+                state.x = Math.min(state.x += 0.05, 1.0);
+                return state;
+            });
+        } else if (key === 'ArrowUp') {
+            this.setState((state, props) => {
+                state.y = Math.max(state.y -= 0.05, 0.0);
+                return state;
+            });
+        } else if (key === 'ArrowDown') {
+            this.setState((state, props) => {
+                state.y = Math.min(state.y += 0.05, 1.0);
+                return state;
+            });
+        }
+    }
+
+    async downloadData(loader) {
+        try {
+            const data = await loader.load(this.props.individualId, this.props.server);
+            this.setState(data);
+        } catch (e) {
+            this.props.callbacks.error(e);
+        }
+    }
 
     viewBox() {
         const w = this.state.geometry.width;
@@ -458,5 +468,11 @@ export class Descendants extends Component {
             </div>
 
         );
+    }
+}
+
+export class Descendants extends RelationalTree {
+    constructor(props) {
+        super(props, new DescendantsLoader());
     }
 }
