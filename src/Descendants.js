@@ -13,6 +13,86 @@ const THIN = 1;
 const MAX_ZOOM = 10.0;
 const MIN_ZOOM = 0.0;
 
+
+function addRect(shapes, x, y, w, h, stroke, stroke_width, id) {
+    shapes.boxes.push(
+        {
+            key: "indi-rect-" + id,
+            x: x,
+            y: y,
+            width: w,
+            height: h,
+            stroke: stroke || "black",
+            fill: "transparent",
+            strokeWidth: stroke_width || 1,
+            id: id,
+        }
+    );
+}
+
+function addText(shapes, x, y, w, h, text, key) {
+    shapes.text.push({
+        key: "text-" + key,
+        x: x,
+        y: y,
+        width: w,
+        height: h,
+        text: text,
+    });
+}
+
+function addIndividualBox(x, y, individual, shapes, stroke, stroke_width) {
+    addRect(shapes, x, y, box_width, box_height, stroke, stroke_width, individual.id);
+    const line_height = (box_height - 4 * box_padding) / 3;
+
+    addText(shapes,
+        x + box_padding,
+        y + box_padding + line_height,
+        box_width - 2 * box_padding,
+        line_height,
+        individual.last_name,
+        "indi-lastname-"+individual.id);
+
+    addText(shapes,
+        x + box_padding,
+        y + 2*box_padding + 2*line_height,
+        box_width - 2 * box_padding,
+        line_height,
+        individual.first_names,
+        "indi-first_names-"+individual.id);
+
+
+    addText(shapes,
+        x + box_padding,
+        y + 3 * box_padding + 3*line_height,
+        box_width - 2 * box_padding,
+        line_height,
+        lifetimeOf(individual),
+        "text-indi-lifetime-"+individual.id);
+}
+
+function addSpouseBox(x, y, individual, shapes) {
+    addIndividualBox(x, y, individual, shapes, BLACK, THIN);
+}
+
+function addDescendantBox(x, y, individual, shapes) {
+    addIndividualBox(x, y, individual, shapes, RED, THICK);
+}
+
+function addLine(shapes, x1, y1, x2, y2, color, stroke_width, key) {
+    shapes.lines.push(
+        {
+            key: key,
+            x1: x1,
+            y1: y1,
+            x2: x2,
+            y2: y2,
+            stroke: color,
+            strokeWidth: stroke_width,
+        }
+    );
+}
+
 class DescendantsLoader {
 
     // Throws on error.
@@ -61,7 +141,6 @@ class DescendantsLoader {
         };
         this.walkIndividual(0, 0, individualId, shapes, individuals);
 
-        console.log(`Downloaded ${individuals.size} individuals' data.`);
         return {
             geometry: geometry,
             shapes: shapes,
@@ -106,85 +185,6 @@ class DescendantsLoader {
         };
     }
 
-    addRect(shapes, x, y, w, h, stroke, stroke_width, id) {
-        shapes.boxes.push(
-            {
-                key: "indi-rect-" + id,
-                x: x,
-                y: y,
-                width: w,
-                height: h,
-                stroke: stroke || "black",
-                fill: "transparent",
-                strokeWidth: stroke_width || 1,
-                id: id,
-            }
-        );
-    }
-
-    addText(shapes, x, y, w, h, text, key) {
-        shapes.text.push({
-            key: "text-" + key,
-            x: x,
-            y: y,
-            width: w,
-            height: h,
-            text: text,
-        });
-    }
-
-    addIndividualBox(x, y, individual, shapes, stroke, stroke_width) {
-        this.addRect(shapes, x, y, box_width, box_height, stroke, stroke_width, individual.id);
-        const line_height = (box_height - 4 * box_padding) / 3;
-
-        this.addText(shapes,
-            x + box_padding,
-            y + box_padding + line_height,
-            box_width - 2 * box_padding,
-            line_height,
-            individual.last_name,
-            "indi-lastname-"+individual.id);
-
-        this.addText(shapes,
-            x + box_padding,
-            y + 2*box_padding + 2*line_height,
-            box_width - 2 * box_padding,
-            line_height,
-            individual.first_names,
-            "indi-first_names-"+individual.id);
-
-
-        this.addText(shapes,
-            x + box_padding,
-            y + 3 * box_padding + 3*line_height,
-            box_width - 2 * box_padding,
-            line_height,
-            lifetimeOf(individual),
-            "text-indi-lifetime-"+individual.id);
-    }
-
-    addSpouseBox(x, y, individual, shapes) {
-        this.addIndividualBox(x, y, individual, shapes, BLACK, THIN);
-    }
-
-    addDescendantBox(x, y, individual, shapes) {
-        this.addIndividualBox(x, y, individual, shapes, RED, THICK);
-    }
-
-    addLine(shapes, x1, y1, x2, y2, color, stroke_width, key) {
-        shapes.lines.push(
-            {
-                key: key,
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2,
-                stroke: color,
-                strokeWidth: stroke_width,
-            }
-        );
-    }
-
     walkIndividual(x, y, id, shapes, individuals) {
         let individual = individuals.get(id);
         let x_offset = individual.row_offset;
@@ -198,7 +198,7 @@ class DescendantsLoader {
         const num_families = individual.families.length;
         if (individual.families.length > 0) {
             let spouse = individual.families[0].spouse;
-            this.addSpouseBox(x + x_offset, y, spouse, shapes);
+            addSpouseBox(x + x_offset, y, spouse, shapes);
 
             // Draw lines down from first spouse to connect to descendant.
             // +------+  +----------+  +------+
@@ -214,23 +214,23 @@ class DescendantsLoader {
             let link_bottom = row_bottom + box_height * (num_families === 1 ? 0.333 : 0.25);
             let drop_bottom = row_bottom + box_height * (num_families === 1 ? 0.66 : 0.5);
 
-            this.addLine(shapes, spouse_mid_x, row_bottom, spouse_mid_x, link_bottom, BLACK, THIN, lineKey + counter++);
-            this.addLine(shapes, spouse_mid_x, link_bottom, drop_x, link_bottom, BLACK, THIN, lineKey + counter++);
-            this.addLine(shapes, drop_x, link_bottom, descendant_mid_x, link_bottom, RED, THICK, lineKey + counter++);
-            this.addLine(shapes, descendant_mid_x, link_bottom, descendant_mid_x, row_bottom, RED, THICK, lineKey + counter++);
-            this.addLine(shapes, drop_x, link_bottom, drop_x, drop_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, spouse_mid_x, row_bottom, spouse_mid_x, link_bottom, BLACK, THIN, lineKey + counter++);
+            addLine(shapes, spouse_mid_x, link_bottom, drop_x, link_bottom, BLACK, THIN, lineKey + counter++);
+            addLine(shapes, drop_x, link_bottom, descendant_mid_x, link_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, descendant_mid_x, link_bottom, descendant_mid_x, row_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, drop_x, link_bottom, drop_x, drop_bottom, RED, THICK, lineKey + counter++);
 
             x_offset += box_width + box_margin;
             spouse_line_drop_offsets.push([drop_x, drop_bottom]);
         }
 
-        this.addDescendantBox(x + x_offset, y, individual, shapes);
+        addDescendantBox(x + x_offset, y, individual, shapes);
 
         x_offset += box_width + box_margin;
 
         if (individual.families.length > 1) {
             let spouse = individual.families[1].spouse;
-            this.addSpouseBox(x + x_offset, y, spouse, shapes);
+            addSpouseBox(x + x_offset, y, spouse, shapes);
 
             let spouse_mid_x = x + x_offset + box_width / 2;
             let descendant_mid_x = x + x_offset - box_margin - box_width / 2;
@@ -238,11 +238,11 @@ class DescendantsLoader {
             let link_bottom = row_bottom + box_height * 0.5;
             let drop_bottom = row_bottom + box_height * 0.75;
 
-            this.addLine(shapes, spouse_mid_x, row_bottom, spouse_mid_x, link_bottom, BLACK, THIN, lineKey + counter++);
-            this.addLine(shapes, spouse_mid_x, link_bottom, drop_x, link_bottom, BLACK, THIN, lineKey + counter++);
-            this.addLine(shapes, drop_x, link_bottom, descendant_mid_x, link_bottom, RED, THICK, lineKey + counter++);
-            this.addLine(shapes, descendant_mid_x, link_bottom, descendant_mid_x, row_bottom, RED, THICK, lineKey + counter++);
-            this.addLine(shapes, drop_x, link_bottom, drop_x, drop_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, spouse_mid_x, row_bottom, spouse_mid_x, link_bottom, BLACK, THIN, lineKey + counter++);
+            addLine(shapes, spouse_mid_x, link_bottom, drop_x, link_bottom, BLACK, THIN, lineKey + counter++);
+            addLine(shapes, drop_x, link_bottom, descendant_mid_x, link_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, descendant_mid_x, link_bottom, descendant_mid_x, row_bottom, RED, THICK, lineKey + counter++);
+            addLine(shapes, drop_x, link_bottom, drop_x, drop_bottom, RED, THICK, lineKey + counter++);
 
             spouse_line_drop_offsets.push([drop_x, drop_bottom]);
             x_offset += box_width + box_margin; // Not needed
@@ -271,13 +271,13 @@ class DescendantsLoader {
                 // Line from the parent's joint line, down to the descendant child.
                 let child = individuals.get(child_id);
 
-                this.addLine(shapes, child_x_pos + child.link_offset, y + box_height + arrow_height,
+                addLine(shapes, child_x_pos + child.link_offset, y + box_height + arrow_height,
                     child_x_pos + child.link_offset, parents_link_y, RED, THICK, lineKey + counter++);
                 child_number++;
                 child_x_offset += child.width;
                 max_child_link_x = Math.max(max_child_link_x, child_x_pos + child.link_offset);
             }
-            this.addLine(shapes, Math.min(min_child_link_x, parents_link_x), parents_link_y,
+            addLine(shapes, Math.min(min_child_link_x, parents_link_x), parents_link_y,
                 Math.max(max_child_link_x, parents_link_x), parents_link_y, RED, THICK, lineKey + counter++);
 
             family_number++; // TODO: don't recalc this.
@@ -285,7 +285,99 @@ class DescendantsLoader {
     }
 }
 
-export class RelationalTree extends Component {
+class AncestorsLoader {
+    // Throws on error.
+    async load(individualId, server) {
+        let individuals = new Map();
+        const data = await server.ancestors(individualId);
+        for (const individual of data) {
+            individuals.set(individual.id, individual);
+        }
+
+        const geometry = this.calculateGeometry(individuals, individualId);
+        let shapes = {
+            boxes: [],
+            lines: [],
+            text: [],
+            links: [],
+        };
+        this.walkIndividual(0, 0, individualId, shapes, individuals);
+
+        return {
+            geometry: geometry,
+            shapes: shapes,
+            individuals: individuals,
+        };
+    }
+
+    walkIndividual(x, y, id, shapes, individuals) {
+        let individual = individuals.get(id);
+        let child_x = x + individual.row_offset;
+        addDescendantBox(child_x, y, individual, shapes);
+
+        if (individual.parents.length === 0) {
+            return;
+        }
+        let lineKey = "indi-line-" + id + "-";
+        let counter = 1;
+
+        let child_middle_x = child_x + box_width / 2;
+        let child_bottom_y = y + box_height;
+        let fork_bottom_y = child_bottom_y + arrow_height / 2;
+        let parent_top_y = y + box_height + arrow_height;
+
+        addLine(shapes, child_middle_x, child_bottom_y, child_middle_x, fork_bottom_y, BLACK, THIN, lineKey + counter++);
+
+        let parent_x = x;
+        let parent_min_link_x = x + individual.width;
+        let parent_max_link_x = parent_x;
+        for (let parent_id of individual.parents) {
+            this.walkIndividual(parent_x, parent_top_y, parent_id, shapes, individuals);
+            let parent_width = individuals.get(parent_id).width;
+            let parent_middle_x = parent_x + parent_width / 2;
+            addLine(shapes, parent_middle_x, fork_bottom_y, parent_middle_x, parent_top_y, BLACK, THIN, lineKey + counter++);
+            parent_min_link_x = Math.min(parent_min_link_x, parent_middle_x);
+            parent_max_link_x = Math.max(parent_max_link_x, parent_middle_x);
+            parent_x += parent_width + box_margin;
+        }
+        if (parent_min_link_x < parent_max_link_x) {
+            addLine(shapes, parent_min_link_x, fork_bottom_y, parent_max_link_x, fork_bottom_y, BLACK, THIN, lineKey + counter++);
+        }
+    }
+
+    calculateGeometry(individuals, individualId) {
+
+        let individual = individuals.get(individualId);
+        if (!individual) {
+            throw Error("Failed to find specified individual!");
+        }
+        let base_width = box_width;
+        let parents_width = 0;
+        let parents_height = 0;
+        const num_parents = individual.parents.length;
+        for (let parent_id of individual.parents) {
+            let geometry = this.calculateGeometry(individuals, parent_id);
+            parents_width += geometry.width;
+            parents_height = Math.max(parents_height, geometry.height);
+        }
+        // Account for margin between parent boxes.
+        parents_width += box_margin * Math.max(0, num_parents - 1);
+        individual.width = Math.max(base_width, parents_width);
+        individual.base_width = base_width;
+        individual.height = box_height +
+            (parents_height > 0 ? arrow_height + parents_height : 0);
+        // Offset from the start of the box to the start of the
+        // individual's box.
+        individual.row_offset = (individual.width - individual.base_width) / 2;
+        individual.link_offset = individual.width / 2;
+        return {
+            width: individual.width,
+            height: individual.height,
+        };
+    }
+}
+
+class RelationalTree extends Component {
     constructor(props, loader) {
         super(props);
         this.state = {
@@ -347,7 +439,7 @@ export class RelationalTree extends Component {
     }
 
     keyUpHandler(e) {
-        console.log(`keyup ${e.key}`);
+        // console.log(`keyup ${e.key}`);
         const key = e.key;
         if (key === '+' || key === '=') {
             this.setState((state, props) => {
@@ -474,5 +566,11 @@ export class RelationalTree extends Component {
 export class Descendants extends RelationalTree {
     constructor(props) {
         super(props, new DescendantsLoader());
+    }
+}
+
+export class Ancestors extends RelationalTree {
+    constructor(props) {
+        super(props, new AncestorsLoader());
     }
 }

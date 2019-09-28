@@ -5,7 +5,7 @@ import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
 import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
-import { Descendants } from './Descendants.js';
+import { Descendants, Ancestors } from './Descendants.js';
 import './App.css';
 
 class App extends Component {
@@ -28,6 +28,7 @@ class App extends Component {
             edit: this.editCallback.bind(this),
             error: this.error.bind(this),
             descendants: this.descendants.bind(this),
+            ancestors: this.ancestors.bind(this),
         };
 
         window.addEventListener("popstate", ((e) => {
@@ -140,6 +141,14 @@ class App extends Component {
         } else {
             this.error("Tried to edit, but you don't have edit privileges!");
         }
+    }
+
+    ancestors(individual) {
+        if (!individual) {
+            console.log("Error: ancestors called with null individual.");
+            return;
+        }
+        this.navigate("Individual ancestors", "/individuals/" + individual.id + "/ancestors");
     }
 
     descendants(individual) {
@@ -270,6 +279,19 @@ class App extends Component {
                         <div className="main">
                             {header}
                             <Descendants
+                                individualId={id}
+                                server={this.server}
+                                callbacks={this.callbacks}
+                            />
+                        </div>
+                    );
+                }
+                if (chunks[2] === "ancestors") {
+                    // URL: /individuals/$id/ancestors
+                    return (
+                        <div className="main">
+                            {header}
+                            <Ancestors
                                 individualId={id}
                                 server={this.server}
                                 callbacks={this.callbacks}

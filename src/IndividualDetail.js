@@ -170,6 +170,11 @@ export class IndividualDetail extends Component {
                         View Descendants Tree
                     </button>
                 </div>
+                <div>
+                    <button onClick={() => this.props.callbacks.ancestors(individual)}>
+                        View Ancestors Tree
+                    </button>
+                </div>
                 {editButton}
             </div>
         );

@@ -208,6 +208,32 @@ export class ServerConnection {
         return descendants;
     }
 
+    async ancestors(individualId) {
+        console.log("Ancestors of " + individualId);
+        const url = backend_server + "individuals/" + individualId + "/ancestors";
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+
+        let response = await fetch(url, init);
+        if (response.status === 401) {
+            // Unauthorized. Token may have expired.
+            this.logout();
+        }
+        console.log("Ancestors " + url + " response status: " + response.status);
+        if (!response.ok) {
+            throw new Error("Ancestors failed with status: " + response.status);
+        }
+        const ancestors = await response.json();
+        return ancestors;
+    }
+
     updateCache(individuals) {
         for (const individual of individuals) {
             this.individuals.set(individual.id, individual);
