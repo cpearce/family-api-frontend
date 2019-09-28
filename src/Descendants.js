@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { lifetimeOf } from './Utils';
+import { lifetimeOf, nameAndLifetimeOf } from './Utils';
 
 const box_padding = 5;
 const box_height = 80;
@@ -96,7 +96,7 @@ function addLine(shapes, x1, y1, x2, y2, color, stroke_width, key) {
 class DescendantsLoader {
 
     // Throws on error.
-    async load(individualId, server) {
+    async load(individualId, titlePrefix, server) {
 
         /*
             Maps individual id to:
@@ -141,10 +141,13 @@ class DescendantsLoader {
         };
         this.walkIndividual(0, 0, individualId, shapes, individuals);
 
+        const individual = individuals.get(individualId);
+
         return {
             geometry: geometry,
             shapes: shapes,
             individuals: individuals,
+            title: titlePrefix + " " + nameAndLifetimeOf(individual),
         };
     }
 
@@ -287,7 +290,7 @@ class DescendantsLoader {
 
 class AncestorsLoader {
     // Throws on error.
-    async load(individualId, server) {
+    async load(individualId, titlePrefix, server) {
         let individuals = new Map();
         const data = await server.ancestors(individualId);
         for (const individual of data) {
@@ -303,10 +306,13 @@ class AncestorsLoader {
         };
         this.walkIndividual(0, 0, individualId, shapes, individuals);
 
+        const individual = individuals.get(individualId);
+
         return {
             geometry: geometry,
             shapes: shapes,
             individuals: individuals,
+            title: titlePrefix + " " + nameAndLifetimeOf(individual),
         };
     }
 
@@ -378,7 +384,7 @@ class AncestorsLoader {
 }
 
 class RelationalTree extends Component {
-    constructor(props, loader) {
+    constructor(props, titlePrefix, loader) {
         super(props);
         this.state = {
             zoom: MAX_ZOOM,
@@ -386,7 +392,7 @@ class RelationalTree extends Component {
             y: 0.5,
         };
 
-        this.downloadData(loader);
+        this.downloadData(loader, titlePrefix);
 
         this.eventHandlers = [
             { event: 'keyup', handler: this.keyUpHandler.bind(this) },
@@ -474,9 +480,9 @@ class RelationalTree extends Component {
         }
     }
 
-    async downloadData(loader) {
+    async downloadData(loader, titlePrefix) {
         try {
-            const data = await loader.load(this.props.individualId, this.props.server);
+            const data = await loader.load(this.props.individualId, titlePrefix, this.props.server);
             this.setState(data);
         } catch (e) {
             this.props.callbacks.error(e);
@@ -548,10 +554,13 @@ class RelationalTree extends Component {
 
         return (
             <div id="svgcontainer">
+                <div className="relational-tree-title">
+                    {this.state.title}
+                </div>
                 <svg
                     viewBox={this.viewBox()}
-                    width={window.innerWidth - 100}
-                    height={window.innerHeight - 100}
+                    width={window.innerWidth - 200}
+                    height={window.innerHeight - 200}
                 >
                     {rects}
                     {texts}
@@ -565,12 +574,12 @@ class RelationalTree extends Component {
 
 export class Descendants extends RelationalTree {
     constructor(props) {
-        super(props, new DescendantsLoader());
+        super(props, "Descendants of", new DescendantsLoader());
     }
 }
 
 export class Ancestors extends RelationalTree {
     constructor(props) {
-        super(props, new AncestorsLoader());
+        super(props, "Ancestors of", new AncestorsLoader());
     }
 }
