@@ -165,6 +165,11 @@ export class IndividualDetail extends Component {
                         families,
                         this.props.callbacks.detail)}
                 </div>
+                <div>
+                    <button onClick={() => this.props.callbacks.descendants(individual)}>
+                        View Descendants Tree
+                    </button>
+                </div>
                 {editButton}
             </div>
         );

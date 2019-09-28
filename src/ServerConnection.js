@@ -179,8 +179,33 @@ export class ServerConnection {
             throw new Error("Search failed with status: " + response.status);
         }
         const families = await response.json();
-        // this.updateCache(individuals);
         return families;
+    }
+
+    async descendants(individualId) {
+        console.log("Descendants of " + individualId);
+        const url = backend_server + "individuals/" + individualId + "/descendants";
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+
+        let response = await fetch(url, init);
+        if (response.status === 401) {
+            // Unauthorized. Token may have expired.
+            this.logout();
+        }
+        console.log("Descendatns " + url + " response status: " + response.status);
+        if (!response.ok) {
+            throw new Error("Descendants failed with status: " + response.status);
+        }
+        const descendants = await response.json();
+        return descendants;
     }
 
     updateCache(individuals) {

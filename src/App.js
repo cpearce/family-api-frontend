@@ -5,6 +5,7 @@ import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
 import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
+import { Descendants } from './Descendants.js';
 import './App.css';
 
 class App extends Component {
@@ -26,6 +27,7 @@ class App extends Component {
             detail: this.detailCallback.bind(this),
             edit: this.editCallback.bind(this),
             error: this.error.bind(this),
+            descendants: this.descendants.bind(this),
         };
 
         window.addEventListener("popstate", ((e) => {
@@ -140,6 +142,14 @@ class App extends Component {
         }
     }
 
+    descendants(individual) {
+        if (!individual) {
+            console.log("Error: descendants called with null individual.");
+            return;
+        }
+        this.navigate("Individual descendants", "/individuals/" + individual.id + "/descendants");
+    }
+
     navigate(title, path, otherState={}) {
         console.log("Navigate " + path);
         window.history.pushState({}, title, path);
@@ -247,6 +257,19 @@ class App extends Component {
                         <div>
                             {header}
                             <EditIndividual
+                                individualId={id}
+                                server={this.server}
+                                callbacks={this.callbacks}
+                            />
+                        </div>
+                    );
+                }
+                if (chunks[2] === "descendants") {
+                    // URL: /individuals/$id/descendants
+                    return (
+                        <div className="main">
+                            {header}
+                            <Descendants
                                 individualId={id}
                                 server={this.server}
                                 callbacks={this.callbacks}
