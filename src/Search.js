@@ -70,7 +70,7 @@ class Search extends Component {
                 results: results,
             })
         } catch (e) {
-            this.props.errorCallbacks(e.message);
+            this.props.errorCallback(e.message);
         }
     }
 
