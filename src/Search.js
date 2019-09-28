@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {assertHasProps, lifetime} from './Utils.js'
+import {assertHasProps, nameAndLifetimeOf} from './Utils.js'
 
 
 const SEARCH_TYPE = {
@@ -101,10 +101,9 @@ class Search extends Component {
 }
 
 function individual_to_str(i, callback) {
-    const name = i.first_names + " " + i.last_name + " " + lifetime(i);
     return (
         <li key={"individual_search"+i.id}>
-            <button onClick={() => callback(i)}>{name}</button>
+            <button onClick={() => callback(i)}>{nameAndLifetimeOf(i)}</button>
         </li>
     )
 }
