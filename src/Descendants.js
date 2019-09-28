@@ -411,6 +411,8 @@ export class Descendants extends Component {
                     fill={box.fill}
                     strokeWidth={box.strokeWidth}
                     onClick={() => this.props.callbacks.detail({id: box.id})}
+                    onMouseEnter={(e) => e.target.classList.add("hover")}
+                    onMouseLeave={(e) => e.target.classList.remove("hover")}
                 ></rect>
             );
         });
