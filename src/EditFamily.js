@@ -105,6 +105,12 @@ export class EditFamily extends Component {
     }
 
     deleteFamily() {
+        const msg =
+            "Do you really want to delete\n" +
+            "this family?"
+        if (!window.confirm(msg)) {
+            return;
+        }
         this.props.deleteFamilyCallback(this.state.id);
     }
 
