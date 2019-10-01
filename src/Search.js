@@ -103,7 +103,7 @@ class Search extends Component {
 function individual_to_str(i, callback) {
     return (
         <li key={"individual_search"+i.id}>
-            <button onClick={() => callback(i)}>{nameAndLifetimeOf(i)}</button>
+            <button className="searchResult" onClick={() => callback(i)}>{nameAndLifetimeOf(i)}</button>
         </li>
     )
 }
@@ -117,7 +117,7 @@ export class SearchIndividuals extends Search {
 function family_to_str(f, callback) {
     return (
         <li key={"family_search"+f.id}>
-            <button onClick={() => callback(f)}>{f.name}</button>
+            <button className="searchResult" onClick={() => callback(f)}>{f.name}</button>
         </li>
     )
 }

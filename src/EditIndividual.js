@@ -64,9 +64,12 @@ export class EditIndividual extends Component {
                 buried_location: individual.buried_location || "",
                 occupation: individual.occupation || "",
                 child_in_family: individual.child_in_family || 0,
+                base: {
+                }
             };
-            this.originalState = {};
-            this.setBaseState(state);
+            for (const prop of MUTABLE_FIELDS) {
+                state.base[prop] = state[prop];
+            }
             this.setState(state);
         } catch (e) {
             this.props.callbacks.error(e);
@@ -74,15 +77,19 @@ export class EditIndividual extends Component {
         this.retrieving = false;
     }
 
-    setBaseState(obj) {
-        for (const prop of MUTABLE_FIELDS) {
-            this.originalState[prop] = obj[prop] || null;
-        }
+    setBaseState() {
+        this.setState((state, props) => {
+            for (const prop of MUTABLE_FIELDS) {
+                state.base[prop] = state[prop];
+            }
+            return state;
+        });
     }
 
     hasUnsavedChanges() {
         for (const prop of MUTABLE_FIELDS) {
-            if (this.state[prop] !== this.originalState[prop]) {
+            if (this.state[prop] !== this.state.base[prop]) {
+                console.log(`${prop} differs '${this.state[prop]}' != '${this.state.base[prop]}'`);
                 return true;
             }
         }
@@ -146,9 +153,7 @@ export class EditIndividual extends Component {
 
         try {
             await this.props.server.saveIndividual(data);
-            for (const prop in data) {
-                this.originalState[prop] = data[prop];
-            }
+            this.setBaseState();
         } catch (e) {
             this.props.callbacks.error(e);
         }
@@ -178,7 +183,7 @@ export class EditIndividual extends Component {
     revert() {
         this.setState((state, props) => {
             for (const prop of MUTABLE_FIELDS) {
-                state[prop] = this.originalState[prop];
+                state[prop] = state.base[prop];
             }
             return state;
         });

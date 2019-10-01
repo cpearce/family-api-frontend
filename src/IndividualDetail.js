@@ -25,66 +25,80 @@ function formatChildren(familyId, children, detailCallback) {
     if (children.length === 0) {
         return null;
     }
-    const f = (child) => (
-        <li key={familyId + "-" + child.id}>
-            <button onClick={() => detailCallback(child)}>
-                {nameAndLifetimeOf(child)}
-            </button>
-        </li>
-    );
-    return (
-        <div>
-            Children:
-            <ul>
-                {children.map(f)}
-            </ul>
-        </div>
-    );
+    let first = true;
+    const f = (child) => {
+        const leftColumn = first ? (<span className="field-title">Children:</span>) : null;
+        first = false;
+        return (
+            <tr key={familyId + "-" + child.id}>
+                <td>
+                    {leftColumn}
+                </td>
+                <td>
+                    <button onClick={() => detailCallback(child)}>
+                        {nameAndLifetimeOf(child)}
+                    </button>
+                </td>
+            </tr>
+        );
+    };
+    return children.map(f);
 }
 
-function formatFamilies(individualId, families, detailCallback, idToIndividual) {
+function formatFamilies(individualId, families, detailCallback) {
+
     const f = (family) => {
         const spouse = family.spouse;
         const children = family.children;
         return (
-            <li key={family.id}>
-                <div className="spouse">
-                    Partner:
-                    <button onClick={() => detailCallback(spouse)}>
-                        {nameAndLifetimeOf(spouse)}
-                    </button>
-                </div>
-                <div>Married: {formatEvent(family.married_date, family.married_location)}</div>
-                {formatChildren(family.id, children, detailCallback)}
-            </li>
+            <table key={"family" + family.id} className="family">
+                <tbody>
+                    <tr>
+                        <td>
+                            <span className="field-title">Partner:</span>
+                        </td>
+                        <td>
+                            <button onClick={() => detailCallback(spouse)}>
+                                {nameAndLifetimeOf(spouse)}
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span className="field-title">Married:</span>
+                        </td>
+                        <td>
+                            {formatEvent(family.married_date, family.married_location)}
+                        </td>
+                    </tr>
+                    {formatChildren(family.id, children, detailCallback)}
+                </tbody>
+
+            </table>
         );
     }
-    return (
-        <div>
-            Families:
-            <ul>
-                {families.map(f)}
-            </ul>
-        </div>
-    );
+    return families.map(f);
 }
 
 function formatParents(parents, detailCallback) {
-    const f = (p) => (
-        <li key={"parent-" + p.id}>
-            <button onClick={() => detailCallback(p)}>{
-                nameAndLifetimeOf(p)}
-            </button>
-        </li>
-    );
-    return (
-        <div>
-            Parents:
-            <ul>
-                {parents.map(f)}
-            </ul>
-        </div>
-    );
+    let first = true;
+    const f = (p) => {
+        const leftColumn = first ? (<span className="field-title">Parents:</span>) : null;
+        first = false;
+        return (
+            <tr key={"parent-" + p.id}>
+                <td>
+                    {leftColumn}
+                </td>
+                <td>
+                    <button onClick={() => detailCallback(p)}>{
+                        nameAndLifetimeOf(p)}
+                    </button>
+                </td>
+            </tr>
+        );
+    };
+    return parents.map(f);
 }
 
 export class IndividualDetail extends Component {
@@ -139,40 +153,57 @@ export class IndividualDetail extends Component {
         const notes = individual.note ?
             (
                 <div id="notes">
-                    <span class="field-title">Notes:</span>
+                    <span className="field-title">Notes:</span>
                     {individual.note}
                 </div>
             ) : null;
 
+        const fields = [
+            ["Last name", individual.last_name],
+            ["First names", individual.first_names],
+            ["Sex", sex],
+            ["Birth", birth],
+            ["Death", death],
+            ["Buried", buried],
+            ["Occupation", individual.occupation],
+            // ["Parents", formatParents(parents, this.props.callbacks.detail)]
+        ];
+
+        const fieldsRows = fields.map(x => {
+            return (
+                <tr key={x[0]}>
+                    <td>
+                        <span className="field-title">{x[0]}:</span>
+                    </td>
+                    <td>
+                        {x[1]}
+                    </td>
+                </tr>
+            )
+        });
+
+        const parentsRows = formatParents(parents, this.props.callbacks.detail);
+
+        const familiesRows = formatFamilies(
+            this.props.individualId,
+            families,
+            this.props.callbacks.detail);
+
+
         return (
-            <div class="individual-detail">
+            <div className="individual-detail">
                 <div id="name">
                     {individual.first_names + " " + individual.last_name}
                 </div>
-                <div id="sex">
-                    Sex: {sex}
-                </div>
-                <div id="birth">
-                    Born: {birth}
-                </div>
-                <div id="death">
-                    Died: {death}
-                </div>
-                <div id="buried">
-                    Buried: {buried}
-                </div>
-                <div id="occupation">
-                    Occupation: {individual.occupation}
-                </div>
-                <div id="parents">
-                    {formatParents(parents, this.props.callbacks.detail)}
-                </div>
-                <div id="families">
-                    {formatFamilies(
-                        this.props.individualId,
-                        families,
-                        this.props.callbacks.detail)}
-                </div>
+                <table className="individual-detail-table">
+                    <tbody>
+                        {fieldsRows}
+                        {parentsRows}
+                    </tbody>
+                </table>
+
+                <span className="field-title">Families:</span>
+                {familiesRows}
                 {notes}
                 <div>
                     <button onClick={() => this.props.callbacks.descendants(individual)}>

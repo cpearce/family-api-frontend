@@ -61,10 +61,82 @@ rect.hover {
 
 .field-title {
   font-weight: bold;
-  margin-right: 1em;
+  margin-right: 0.5em;
 }
 
 .individual-detail {
   max-width: 50em;
   padding: 1em;
+}
+
+#name {
+  margin: 5px;
+}
+
+table.individual-detail-table {
+  /* background-color: lightgray; */
+  /* border: solid black 1px; */
+  margin-top: 0.5em;
+}
+
+table.family {
+  background-color: lightgray;
+  border: solid black 1px;
+  margin-top: 0.5em;
+}
+
+.field-title {
+  margin: 5px;
+}
+
+table.family tr td:first-child {
+  width: 100px;
+}
+
+table.family tr td:last-child {
+  text-align: left;
+  width: 400px;
+}
+
+table.individual-detail-table {
+  margin-top: 0.5em;
+}
+
+table.individual-detail-table tr td:first-child {
+  width: 100px;
+}
+
+table.individual-detail-table tr td:last-child {
+  text-align: left;
+  width: 400px;
+}
+
+.individual-detail button {
+  border: none;
+  color: blue;
+  background-color: transparent;
+  /* padding: 10px 20px; */
+  /* text-align: center; */
+  margin: 0;
+  padding: 0;
+  text-decoration: underline;
+  display: inline-block;
+  font-size: 14px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  cursor: pointer;
+}
+
+button.searchResult {
+  border: none;
+  color: blue;
+  background-color: transparent;
+  /* padding: 10px 20px; */
+  /* text-align: center; */
+  margin: 0;
+  padding: 0;
+  text-decoration: underline;
+  display: inline-block;
+  font-size: 14px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  cursor: pointer;
 }
