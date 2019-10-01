@@ -46,6 +46,18 @@ export class FamiliesOfList extends Component {
     }
 }
 
+function childArrayEquals(a, b) {
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i].id !== b[i].id) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export class EditFamily extends Component {
     constructor(props) {
         super(props);
@@ -62,37 +74,47 @@ export class EditFamily extends Component {
         this.save = this.save.bind(this);
         this.revert = this.revert.bind(this);
         this.state = {
-            id: this.props.family.id,
             married_date: this.props.family.married_date || "",
             married_location: this.props.family.married_location || "",
-            individualId: this.props.individualId.id,
-            spouse: this.props.family.spouse || "",
-            children: this.props.family.children || [],
+            spouse: this.props.family.spouse || null,
+            children: this.props.family.children.concat() || [],
+            base: {
+                married_date: this.props.family.married_date || "",
+                married_location: this.props.family.married_location || "",
+                spouse: this.props.family.spouse || null,
+                children: this.props.family.children.concat() || [],
+            }
         };
-        this.originalState = {};
-        this.setBaseState(this.state);
     }
 
-    setBaseState(obj) {
-        for (const prop in obj) {
-            this.originalState[prop] = obj[prop];
-        }
+    setBaseState() {
+        this.setState((state, props) => {
+            state.base.married_date = state.married_date || "";
+            state.base.married_location = state.married_location || "";
+            state.base.children = state.children.concat() || [];
+            state.base.spouse = state.spouse || null;
+            return state;
+        });
     }
 
     revert() {
         this.setState((state, props) => {
-            for (const prop in this.originalState) {
-                state[prop] = this.originalState[prop];
-            }
+            state.married_date = state.base.married_date || "";
+            state.married_location = state.base.married_location || "";
+            state.children = state.base.children.concat() || [];
+            state.spouse = state.base.spouse || null;
             return state;
         });
     }
 
     hasUnsavedChanges() {
-        for (const prop in this.originalState) {
-            if (this.state[prop] !== this.originalState[prop]) {
-                return true;
-            }
+        if (this.state.married_date !== this.state.base.married_date ||
+            this.state.married_location !== this.state.base.married_location ||
+            ((this.state.spouse === null) !== (this.state.base.spouse === null)) ||
+            (this.state.spouse && this.state.base.spouse &&
+                this.state.spouse.id !== this.state.base.spouse.id) ||
+            !childArrayEquals(this.state.children, this.state.base.children)) {
+            return true;
         }
         return false;
     }
@@ -111,23 +133,25 @@ export class EditFamily extends Component {
         if (!window.confirm(msg)) {
             return;
         }
-        this.props.deleteFamilyCallback(this.state.id);
+        this.props.deleteFamilyCallback(this.props.individualId);
     }
 
     async save() {
         let partners = [this.props.individualId];
-        if (this.state.partner) {
-            partners = partners.concat([this.state.spouse]);
+        if (this.state.spouse) {
+            partners = partners.concat([this.state.spouse.id]);
         }
 
         const children = this.state.children.map(i => i.id);
         let data = {
-            id: this.state.id || null,
+            id: this.props.individualId,
             married_date: this.state.married_date || null,
             married_location: this.state.married_location || "",
             partners: partners,
             children: children || [],
         };
+
+        // all wrong, need to be saving spouse as spouse, nto as partner.
 
         if (data.id === null) {
             console.log("id is null when saving family!");
@@ -135,13 +159,11 @@ export class EditFamily extends Component {
             try {
                 console.log("Saving family " + data.id);
                 await this.props.server.saveFamily(data);
-                this.setBaseState(data);
+                this.setBaseState();
             } catch (e) {
-                this.props.error(e.message);
+                this.props.error(e);
             }
         }
-
-
     }
 
     setPartner(individual) {
@@ -168,7 +190,7 @@ export class EditFamily extends Component {
         return (
             <div className="editable-family">
                 <div>
-                    ID: {this.state.id}
+                    ID: {this.props.individualId}
                 </div>
                 <div>
                     <SearchToSelectPerson
@@ -225,7 +247,6 @@ export class EditFamily extends Component {
     }
 
     addChildCallback(child) {
-        // console.log("Add child " + child.id + " type=" + (typeof child.id));
         this.setState((state, props) => {
             state.children.push(child);
             return state;
