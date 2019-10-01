@@ -144,7 +144,7 @@ export class EditFamily extends Component {
 
         const children = this.state.children.map(i => i.id);
         let data = {
-            id: this.props.individualId,
+            id: this.props.family.id,
             married_date: this.state.married_date || null,
             married_location: this.state.married_location || "",
             partners: partners,
@@ -190,7 +190,7 @@ export class EditFamily extends Component {
         return (
             <div className="editable-family">
                 <div>
-                    ID: {this.props.individualId}
+                    ID: {this.props.family.id}
                 </div>
                 <div>
                     <SearchToSelectPerson
