@@ -136,8 +136,16 @@ export class IndividualDetail extends Component {
         );
         const sex = individual.sex === "M" ? "Male" :
             (individual.sex === "F" ? "Female" : "?");
+        const notes = individual.note ?
+            (
+                <div id="notes">
+                    <span class="field-title">Notes:</span>
+                    {individual.note}
+                </div>
+            ) : null;
+
         return (
-            <div>
+            <div class="individual-detail">
                 <div id="name">
                     {individual.first_names + " " + individual.last_name}
                 </div>
@@ -165,6 +173,7 @@ export class IndividualDetail extends Component {
                         families,
                         this.props.callbacks.detail)}
                 </div>
+                {notes}
                 <div>
                     <button onClick={() => this.props.callbacks.descendants(individual)}>
                         View Descendants Tree
