@@ -174,6 +174,7 @@ class App extends Component {
                 path={this.state.path}
                 screen={this.state.screen}
                 callbacks={this.callbacks}
+                server={this.server}
                 canEdit={this.state.canEdit}
             />
         );

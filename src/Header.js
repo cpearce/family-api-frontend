@@ -8,11 +8,11 @@ export class Header extends Component {
 
     async addIndividual() {
         try {
-            const individual = await this.server.newIndividual()
+            const individual = await this.props.server.newIndividual()
             console.log("Created individual " + individual.id);
             this.props.callbacks.edit(individual);
         } catch (e) {
-            this.error(e.message);
+            this.props.callbacks.error(e.message);
         }
     }
 
