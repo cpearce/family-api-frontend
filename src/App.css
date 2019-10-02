@@ -64,7 +64,7 @@ rect.hover {
   margin-right: 0.5em;
 }
 
-.individual-detail {
+.individual-detail, .edit-individual-detail {
   max-width: 50em;
   padding: 1em;
 }
@@ -111,7 +111,23 @@ table.individual-detail-table tr td:last-child {
   width: 400px;
 }
 
-.individual-detail button {
+table.edit-individual-detail-table {
+  margin-top: 0.5em;
+}
+
+table.edit-individual-detail-table tr td:first-child {
+  width: 150px;
+  vertical-align: top;
+  text-align: left;
+}
+
+table.edit-individual-detail-table tr td:last-child {
+  text-align: left;
+  width: 600px;
+  vertical-align: top;
+}
+
+.individual-detail button, button.fake-link {
   border: none;
   color: blue;
   background-color: transparent;

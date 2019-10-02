@@ -16,7 +16,8 @@ const MUTABLE_FIELDS = [
     'buried_date',
     'buried_location',
     'occupation',
-    'child_in_family',
+    'child_in_family_id',
+    'parents_family',
 ];
 
 export class EditIndividual extends Component {
@@ -31,8 +32,6 @@ export class EditIndividual extends Component {
         this.addFamilyCallback = this.addFamilyCallback.bind(this);
         this.deleteFamilyCallback = this.deleteFamilyCallback.bind(this);
         this.setChildOfFamily = this.setChildOfFamily.bind(this);
-
-        this.originalState = {};
 
         this.invalidate();
 
@@ -63,7 +62,8 @@ export class EditIndividual extends Component {
                 buried_date: individual.buried_date || "",
                 buried_location: individual.buried_location || "",
                 occupation: individual.occupation || "",
-                child_in_family: individual.child_in_family || 0,
+                child_in_family_id: individual.child_in_family_id || 0,
+                parents_family: data.parents_family || null,
                 base: {
                 }
             };
@@ -139,7 +139,7 @@ export class EditIndividual extends Component {
         // "null", rather than an empty string.
         const nullableFields = [
             'id', 'birth_date', 'death_date',
-            'buried_date', 'child_in_family'
+            'buried_date', 'child_in_family_id'
         ];
         for (let field of nullableFields) {
             data[field] = this.state[field] || null;
@@ -191,8 +191,8 @@ export class EditIndividual extends Component {
 
     async setChildOfFamily(family) {
         this.setState((state, props) => {
-            state.data.child_in_family = family.id;
-            state.data.parents_family = family;
+            state.child_in_family_id = family.id;
+            state.parents_family = family;
             return state;
         });
     }
@@ -211,116 +211,82 @@ export class EditIndividual extends Component {
             );
         }
 
-        // const individual = this.state.data.individual;
-        const parents_family_name = this.state.data.parents_family ? this.state.data.parents_family.name : "Unknown";
+        const htmlInput = (id, type) => {
+            return (
+                <input
+                    type={type}
+                    value={this.state[id]}
+                    id={id}
+                    onChange={this.handleInputChange}
+                />
+            );
+        };
+
+        const sexHtml = (
+            <select
+                id="sex"
+                value={this.state.sex}
+                onChange={this.handleInputChange}
+            >
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="?">Unknown</option>
+            </select>
+        );
+
+        const parents_family_name = this.state.parents_family
+            ? this.state.parents_family.name : "Unknown";
+        const childOf = (
+            <SearchToSelectFamily
+                furledLabel={parents_family_name}
+                unfurledLabel="Search for parents"
+                text="Change"
+                callback={this.setChildOfFamily}
+                error={this.props.error}
+                server={this.props.server}
+            />
+        );
+
+        // [label, input]
+        const fields = [
+            ["Last Name", htmlInput("last_name", "text")],
+            ["First Names", htmlInput("first_names", "text")],
+            ["Sex", sexHtml],
+            ["Birth Date", htmlInput("birth_date", "date")],
+            ["Birth Location", htmlInput("birth_location", "text")],
+            ["Death Date", htmlInput("death_date", "date")],
+            ["Death Location", htmlInput("death_location", "text")],
+            ["Buried Date", htmlInput("buried_date", "date")],
+            ["Buried Location", htmlInput("buried_location", "text")],
+            ["Occupation", htmlInput("occupation", "text")],
+            ["Child Of", childOf]
+        ];
+
+        const fieldsRows = fields.map(f => {
+            return (
+                <tr key={f[0]}>
+                    <td>
+                        <span className="field-title">{f[0]}:</span>
+                    </td>
+                    <td>
+                        {f[1]}
+                    </td>
+                </tr>
+            );
+        });
+
         return (
-            <div>
-                <div>
-                    ID: {this.state.id}
-                </div>
-                <div>
-                    <label htmlFor="last_name">Last Name:</label>
-                    <input
-                        type="text"
-                        value={this.state.last_name}
-                        id="last_name"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="first_names">First Names:</label>
-                    <input
-                        type="text"
-                        value={this.state.first_names}
-                        id="first_names"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="sex">Sex:</label>
-                    <select
-                        id="sex"
-                        value={this.state.sex}
-                        onChange={this.handleInputChange}
-                    >
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                        <option value="?">Unknown</option>
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="birth_date">Birth Date:</label>
-                    <input
-                        type="date"
-                        value={this.state.birth_date}
-                        id="birth_date"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="birth_location">Birth Location:</label>
-                    <input
-                        type="text"
-                        value={this.state.birth_location}
-                        id="birth_location"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="death_date">Death Date:</label>
-                    <input
-                        type="date"
-                        value={this.state.death_date}
-                        id="death_date"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="death_location">Death Location:</label>
-                    <input
-                        type="text"
-                        value={this.state.death_location}
-                        id="death_location"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="buried_date">Buried Date:</label>
-                    <input
-                        type="date"
-                        value={this.state.buried_date}
-                        id="buried_date"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="buried_location">Buried Location:</label>
-                    <input
-                        type="text"
-                        value={this.state.buried_location}
-                        id="buried_location"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="occupation">Occupation:</label>
-                    <input
-                        type="text"
-                        value={this.state.occupation}
-                        id="occupation"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <SearchToSelectFamily
-                        furledLabel={"Child of: " + (parents_family_name)}
-                        unfurledLabel="Search for parents"
-                        text="Change"
-                        callback={this.setChildOfFamily}
-                        error={this.props.error}
-                        server={this.props.server}
-                    />
-                </div>
+            <div className="edit-individual-detail">
+                <table className="edit-individual-detail-table">
+                    <tbody>
+                        <tr>
+                            <td><span className="field-title">ID:</span></td>
+                            <td>{this.state.id}</td>
+                        </tr>
+                        {fieldsRows}
+                    </tbody>
+                </table>
+
                 <div>
                     <button onClick={this.save} disabled={!this.hasUnsavedChanges()}>Save changes</button>
                     <button onClick={this.revert} disabled={!this.hasUnsavedChanges()}>Discard unsaved changes to individual</button>
