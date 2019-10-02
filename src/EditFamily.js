@@ -175,68 +175,102 @@ export class EditFamily extends Component {
     render() {
         // console.log("Render children: " + this.state.children);
 
+        let firstChild = true;
         const children_in_family = this.state.children.map(
-            child => (
-                <li key={"child-" + child.id}>
-                    {nameOf(child)}
-                    <button
-                        onClick={() => this.removeChild(child) }
-                        title="Remove a child from a family. Does not delete the child from the database.">
-                            Remove from family
-                    </button>
-                </li>
-            )
+            child => {
+                const label = firstChild ? (<span className="field-title">Children:</span>) : "";
+                firstChild = false;
+                return (
+                    <tr>
+                        <td>
+                            {label}
+                        </td>
+                        <td>
+                            {nameOf(child)}
+                        </td>
+                        <td>
+                            <button
+                                onClick={() => this.removeChild(child) }
+                                title="Remove a child from a family. Does not delete the child from the database.">
+                                    Remove from family
+                            </button>
+                        </td>
+                    </tr>
+                );
+            }
         );
+
+
+        const partnerSelect = (
+            <SearchToSelectPerson
+                furledLabel={nameOf(this.state.spouse)}
+                unfurledLabel="Search for spouse"
+                text="Change"
+                callback={this.setPartner}
+                error={this.props.error}
+                server={this.props.server}
+            />
+        );
+
+        const htmlInput = (id, type) => {
+            return (
+                <input
+                    type={type}
+                    value={this.state[id]}
+                    id={id}
+                    onChange={this.handleInputChange}
+                />
+            );
+        };
+
+        // [label, input]
+        const fields = [
+            ["Partner", partnerSelect],
+            ["Married Date", htmlInput("married_date", "date")],
+            ["Married Location", htmlInput("married_location", "text")],
+        ];
+
+        const fieldsRows = fields.map(f => {
+            return (
+                <tr key={f[0]}>
+                    <td>
+                        <span className="field-title">{f[0]}:</span>
+                    </td>
+                    <td>
+                        {f[1]}
+                    </td>
+                </tr>
+            );
+        });
+
         return (
             <div className="editable-family">
-                <div>
-                    ID: {this.props.family.id}
-                </div>
-                <div>
-                    <SearchToSelectPerson
-                        furledLabel={"Partner: " + nameOf(this.state.spouse)}
-                        unfurledLabel="Search for spouse"
-                        text="Change"
-                        callback={this.setPartner}
-                        error={this.props.error}
-                        server={this.props.server}
-
-                    />
-                </div>
-                <div>
-                    <label htmlFor="married_date">Marriage Date (optional):</label>
-                    <input
-                        type="date"
-                        value={this.state.married_date}
-                        id="married_date"
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="married_location">Marriage Location (optional):</label>
-                    <input
-                        type="text"
-                        id="married_location"
-                        value={this.state.married_location}
-                        onChange={this.handleInputChange}
-                    />
-                </div>
-                <div>
-                    Children in family:
-                    <ul>
-                        { children_in_family }
-                        <li>
-                            <SearchToSelectPerson
-                                furledLabel=""
-                                unfurledLabel="Search for child to add"
-                                text="Add Child"
-                                server={this.props.server}
-                                error={this.props.error}
-                                callback={this.addChildCallback}
-                            />
-                        </li>
-                    </ul>
-                </div>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span className="field-title">ID:</span>
+                            </td>
+                            <td colSpan="2">
+                                {this.props.family.id}
+                            </td>
+                        </tr>
+                        {fieldsRows}
+                        {children_in_family}
+                        <tr>
+                            <td colSpan="3">
+                                <SearchToSelectPerson
+                                    furledLabel=""
+                                    unfurledLabel="Search for child to add"
+                                    text="Add Child to Family"
+                                    server={this.props.server}
+                                    error={this.props.error}
+                                    callback={this.addChildCallback}
+                                />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 <div>
                     <button onClick={this.save}  disabled={!this.hasUnsavedChanges()}>Save</button>
                     <button onClick={this.revert} disabled={!this.hasUnsavedChanges()}>Discard unsaved changes to family</button>
