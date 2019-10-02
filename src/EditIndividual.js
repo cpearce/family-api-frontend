@@ -16,6 +16,7 @@ const MUTABLE_FIELDS = [
     'buried_date',
     'buried_location',
     'occupation',
+    'note',
     'child_in_family_id',
     'parents_family',
 ];
@@ -62,6 +63,7 @@ export class EditIndividual extends Component {
                 buried_date: individual.buried_date || "",
                 buried_location: individual.buried_location || "",
                 occupation: individual.occupation || "",
+                note: individual.note || "",
                 child_in_family_id: individual.child_in_family_id || 0,
                 parents_family: data.parents_family || null,
                 base: {
@@ -129,6 +131,7 @@ export class EditIndividual extends Component {
             'death_location',
             'buried_location',
             'occupation',
+            'note',
         ];
         let data = {};
         for (const field of stringFields) {
@@ -157,7 +160,6 @@ export class EditIndividual extends Component {
         } catch (e) {
             this.props.callbacks.error(e);
         }
-
     }
 
     async addFamilyCallback(partnerIds) {
@@ -275,6 +277,20 @@ export class EditIndividual extends Component {
             );
         });
 
+        const note = (
+            <tr key="note-textarea">
+                <td>
+                    <span className="field-title">Note:</span>
+                </td>
+                <td>
+                    <textarea
+                        id="note" rows="10" cols="60" value={this.state.note}
+                        onChange={this.handleInputChange}>
+                    </textarea>
+                </td>
+            </tr>
+        );
+
         return (
             <div className="edit-individual-detail">
                 <table className="edit-individual-detail-table">
@@ -284,6 +300,7 @@ export class EditIndividual extends Component {
                             <td>{this.state.id}</td>
                         </tr>
                         {fieldsRows}
+                        {note}
                     </tbody>
                 </table>
 
