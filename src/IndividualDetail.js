@@ -166,7 +166,6 @@ export class IndividualDetail extends Component {
             ["Death", death],
             ["Buried", buried],
             ["Occupation", individual.occupation],
-            // ["Parents", formatParents(parents, this.props.callbacks.detail)]
         ];
 
         const fieldsRows = fields.map(x => {
