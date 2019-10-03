@@ -156,3 +156,18 @@ button.searchResult {
   font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   cursor: pointer;
 }
+
+.relational-tree-legend {
+  z-index: 100;
+  position: absolute;
+  top: 100px;
+  left: 30px;
+  border: solid black 1px;
+  padding: 10px;
+  background-color: rgb(252, 78, 3);
+}
+
+.relational-tree-legend button {
+  padding: 0.5em;
+  margin-top: 0.5em;
+}

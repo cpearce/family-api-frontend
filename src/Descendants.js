@@ -383,6 +383,9 @@ class AncestorsLoader {
     }
 }
 
+// window.localStorage.setItem("hide-relational-legend", false)
+const HIDE_TREE_LEGEND_KEY = "hide-relational-legend";
+
 class RelationalTree extends Component {
     constructor(props, titlePrefix, loader) {
         super(props);
@@ -390,6 +393,7 @@ class RelationalTree extends Component {
             zoom: MAX_ZOOM,
             x: 0.5,
             y: 0.5,
+            showLegend: window.localStorage.getItem(HIDE_TREE_LEGEND_KEY) !== true,
         };
 
         this.downloadData(loader, titlePrefix);
@@ -402,6 +406,13 @@ class RelationalTree extends Component {
         ];
 
         this.isPointerDown = false;
+    }
+
+    hideLegend() {
+        window.localStorage.setItem(HIDE_TREE_LEGEND_KEY, true);
+        this.setState({
+            showLegend: false,
+        });
     }
 
     componentDidMount() {
@@ -552,11 +563,20 @@ class RelationalTree extends Component {
             );
         });
 
+        const legend = this.state.showLegend ? (
+            <div className="relational-tree-legend">
+                <div>Press + and - to zoom in and out.</div>
+                <div>Use arrow keys, or click and drag to move around.</div>
+                <button onClick={() => this.hideLegend()}>OK, hide this message!</button>
+            </div>
+        ) : null;
+
         return (
             <div id="svgcontainer">
                 <div className="relational-tree-title">
                     {this.state.title}
                 </div>
+                {legend}
                 <svg
                     viewBox={this.viewBox()}
                     width={window.innerWidth - 200}
