@@ -403,6 +403,7 @@ class RelationalTree extends Component {
             { event: 'pointermove', handler: this.pointerMoveHandler.bind(this) },
             { event: 'pointerdown', handler: this.pointerDownHandler.bind(this) },
             { event: 'pointerup', handler: this.pointerUpHandler.bind(this) },
+            { event: 'wheel', handler: this.wheelHandler.bind(this) },
         ];
 
         this.isPointerDown = false;
@@ -425,6 +426,16 @@ class RelationalTree extends Component {
         for (const h of this.eventHandlers) {
             window.removeEventListener(h.event, h.handler);
         }
+    }
+
+    wheelHandler(e) {
+        this.setState((state, props) => {
+            return {
+                zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, state.zoom + (e.deltaY / 50.0))),
+            }
+        });
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     pointerMoveHandler(e) {
@@ -565,8 +576,8 @@ class RelationalTree extends Component {
 
         const legend = this.state.showLegend ? (
             <div className="relational-tree-legend">
-                <div>Press + and - to zoom in and out.</div>
-                <div>Use arrow keys, or click and drag to move around.</div>
+                <div>To zoom in and out use mouse wheel, or press + or -</div>
+                <div>To move around click and drag or use arrow keys.</div>
                 <button onClick={() => this.hideLegend()}>OK, hide this message!</button>
             </div>
         ) : null;
