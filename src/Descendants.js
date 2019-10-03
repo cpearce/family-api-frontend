@@ -445,9 +445,14 @@ class RelationalTree extends Component {
         e.preventDefault();
         e.stopPropagation();
         this.setState((state, props) => {
+            const zoom = state.zoom / MAX_ZOOM;
+            const dx = e.movementX / window.innerWidth;
+            const dy = e.movementY / window.innerHeight;
+            const x = state.x - dx * zoom;
+            const y = state.y - dy * zoom;
             return {
-                x: Math.min(1.0, Math.max(0, state.x - (e.movementX / window.innerWidth))),
-                y: Math.min(1.0, Math.max(0, state.y - (e.movementY / window.innerHeight))),
+                x: Math.min(1.0, Math.max(0, x)),
+                y: Math.min(1.0, Math.max(0, y)),
             }
         });
     }
