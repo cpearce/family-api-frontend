@@ -150,13 +150,12 @@ export class IndividualDetail extends Component {
         );
         const sex = individual.sex === "M" ? "Male" :
             (individual.sex === "F" ? "Female" : "?");
-        const notes = individual.note ?
-            (
+        const notes = (
                 <div id="notes">
                     <span className="field-title">Notes:</span>
-                    {individual.note}
+                    {individual.note ? individual.note : null}
                 </div>
-            ) : null;
+            );
 
         const fields = [
             ["Last name", individual.last_name],
