@@ -15,6 +15,8 @@ const MUTABLE_FIELDS = [
     'death_location',
     'buried_date',
     'buried_location',
+    'baptism_date',
+    'baptism_location',
     'occupation',
     'note',
     'child_in_family_id',
@@ -62,6 +64,8 @@ export class EditIndividual extends Component {
                 death_location: individual.death_location || "",
                 buried_date: individual.buried_date || "",
                 buried_location: individual.buried_location || "",
+                baptism_date: individual.baptism_date || "",
+                baptism_location: individual.baptism_location || "",
                 occupation: individual.occupation || "",
                 note: individual.note || "",
                 child_in_family_id: individual.child_in_family_id || 0,
@@ -130,6 +134,7 @@ export class EditIndividual extends Component {
             'birth_location',
             'death_location',
             'buried_location',
+            'baptism_location',
             'occupation',
             'note',
         ];
@@ -142,7 +147,7 @@ export class EditIndividual extends Component {
         // "null", rather than an empty string.
         const nullableFields = [
             'id', 'birth_date', 'death_date',
-            'buried_date', 'child_in_family_id'
+            'buried_date', 'baptism_date', 'child_in_family_id'
         ];
         for (let field of nullableFields) {
             data[field] = this.state[field] || null;
@@ -260,6 +265,8 @@ export class EditIndividual extends Component {
             ["Death Location", htmlInput("death_location", "text")],
             ["Buried Date", htmlInput("buried_date", "date")],
             ["Buried Location", htmlInput("buried_location", "text")],
+            ["Baptism Date", htmlInput("baptism_date", "date")],
+            ["Baptism Location", htmlInput("baptism_location", "text")],
             ["Occupation", htmlInput("occupation", "text")],
             ["Child Of", childOf]
         ];

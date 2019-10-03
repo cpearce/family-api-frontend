@@ -181,7 +181,7 @@ export class EditFamily extends Component {
                 const label = firstChild ? (<span className="field-title">Children:</span>) : "";
                 firstChild = false;
                 return (
-                    <tr>
+                    <tr key={"edit-child-"+child.id}>
                         <td>
                             {label}
                         </td>
