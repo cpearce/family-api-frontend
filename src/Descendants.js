@@ -30,7 +30,7 @@ function addRect(shapes, x, y, w, h, stroke, stroke_width, id) {
     );
 }
 
-function addText(shapes, x, y, w, h, text, key) {
+function addText(shapes, x, y, w, h, text, key, id) {
     shapes.text.push({
         key: "text-" + key,
         x: x,
@@ -38,6 +38,7 @@ function addText(shapes, x, y, w, h, text, key) {
         width: w,
         height: h,
         text: text,
+        id: id,
     });
 }
 
@@ -51,7 +52,8 @@ function addIndividualBox(x, y, individual, shapes, stroke, stroke_width) {
         box_width - 2 * box_padding,
         line_height,
         individual.last_name,
-        "indi-lastname-"+individual.id);
+        "indi-lastname-"+individual.id,
+        individual.id);
 
     addText(shapes,
         x + box_padding,
@@ -59,7 +61,8 @@ function addIndividualBox(x, y, individual, shapes, stroke, stroke_width) {
         box_width - 2 * box_padding,
         line_height,
         individual.first_names,
-        "indi-first_names-"+individual.id);
+        "indi-first_names-"+individual.id,
+        individual.id);
 
 
     addText(shapes,
@@ -68,7 +71,8 @@ function addIndividualBox(x, y, individual, shapes, stroke, stroke_width) {
         box_width - 2 * box_padding,
         line_height,
         lifetimeOf(individual),
-        "text-indi-lifetime-"+individual.id);
+        "text-indi-lifetime-"+individual.id,
+        individual.id);
 }
 
 function addSpouseBox(x, y, individual, shapes) {
@@ -383,7 +387,7 @@ class AncestorsLoader {
     }
 }
 
-// window.localStorage.setItem("hide-relational-legend", false)
+// window.localStorage.setItem("hide-relational-legend", "false")
 const HIDE_TREE_LEGEND_KEY = "hide-relational-legend";
 
 class RelationalTree extends Component {
@@ -393,7 +397,7 @@ class RelationalTree extends Component {
             zoom: MAX_ZOOM,
             x: 0.5,
             y: 0.5,
-            showLegend: window.localStorage.getItem(HIDE_TREE_LEGEND_KEY) !== true,
+            hideLegend: window.localStorage.getItem(HIDE_TREE_LEGEND_KEY) === "true",
         };
 
         this.downloadData(loader, titlePrefix);
@@ -410,9 +414,9 @@ class RelationalTree extends Component {
     }
 
     hideLegend() {
-        window.localStorage.setItem(HIDE_TREE_LEGEND_KEY, true);
+        window.localStorage.setItem(HIDE_TREE_LEGEND_KEY, "true");
         this.setState({
-            showLegend: false,
+            hideLegend: true,
         });
     }
 
@@ -472,7 +476,6 @@ class RelationalTree extends Component {
     }
 
     keyUpHandler(e) {
-        // console.log(`keyup ${e.key}`);
         const key = e.key;
         if (key === '+' || key === '=') {
             this.setState((state, props) => {
@@ -560,6 +563,7 @@ class RelationalTree extends Component {
                     y={t.y}
                     width={t.width}
                     height={t.height}
+                    onClick={() => this.props.callbacks.detail({id: t.id})}
                 >{t.text}</text>
             );
         });
@@ -579,13 +583,13 @@ class RelationalTree extends Component {
             );
         });
 
-        const legend = this.state.showLegend ? (
+        const legend = this.state.hideLegend ? null : (
             <div className="relational-tree-legend">
                 <div>To zoom in and out use mouse wheel, or press + or -</div>
                 <div>To move around click and drag or use arrow keys.</div>
                 <button onClick={() => this.hideLegend()}>OK, hide this message!</button>
             </div>
-        ) : null;
+        );
 
         return (
             <div id="svgcontainer">

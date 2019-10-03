@@ -50,6 +50,12 @@ svg {
   border: solid gray 1px;
 }
 
+svg text {
+  fill: blue;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 rect.hover {
   cursor: pointer;
 }
