@@ -3,6 +3,7 @@ import { FamiliesOfList } from './EditFamily.js';
 import { SearchToSelectFamily } from './SearchToSelect.js';
 import './Editable.css';
 import {nameAndLifetimeOf} from './Utils.js';
+import { assertHasProps } from './Utils';
 
 
 const MUTABLE_FIELDS = [
@@ -26,6 +27,8 @@ const MUTABLE_FIELDS = [
 export class EditIndividual extends Component {
     constructor(props) {
         super(props);
+        assertHasProps(props, ['isStaff', 'isEditor', 'callbacks', 'server']);
+        assertHasProps(props.callbacks, ['edit', 'error', 'search', 'logout']);
         this.state = {
         };
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -182,7 +185,7 @@ export class EditIndividual extends Component {
         try {
             await this.props.server.deleteFamily(familyId);
         } catch (e) {
-            this.props.error(e);
+            this.props.callbacks.error(e);
         }
         await this.invalidate();
     }
@@ -249,7 +252,7 @@ export class EditIndividual extends Component {
                 unfurledLabel="Search for parents"
                 text="Change"
                 callback={this.setChildOfFamily}
-                error={this.props.error}
+                error={this.props.callbacks.error}
                 server={this.props.server}
             />
         );
