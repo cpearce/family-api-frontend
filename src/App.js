@@ -63,9 +63,9 @@ class App extends Component {
             let account = await this.server.checkAccount();
             // Our stored token is still valid. Show the individuals list.
             console.log("conect() succeeded");
-            console.log("Can edit: " + account.can_edit);
+            console.log("username: " + account.username);
             this.setState({
-                canEdit: account.can_edit,
+                username: account.username,
             });
             // Show search page after login.
             if (this.state.path === "/login") {
@@ -101,8 +101,7 @@ class App extends Component {
         try {
             await this.server.login(username, password);
             let account = await this.server.checkAccount();
-            console.log("Can edit: " + account.can_edit);
-            this.navigate("Individuals", "/individuals", { canEdit: account.can_edit });
+            this.navigate("Individuals", "/individuals", { username: account.username });
         } catch (e) {
             this.error("Login Failed: " + e.message);
         } finally {
