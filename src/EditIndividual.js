@@ -320,14 +320,14 @@ export class EditIndividual extends Component {
                     {maybeDeleteButton}
                 </div>
                 <FamiliesOfList
-                    server={this.props.server}
-                    individualId={this.props.individualId}
-                    families={this.state.data.families}
-                    callbacks={this.props.callbacks}
                     addFamilyCallback={this.addFamilyCallback}
+                    callbacks={this.props.callbacks}
                     deleteFamilyCallback={this.deleteFamilyCallback}
                     error={this.props.callbacks.error}
+                    families={this.state.data.families}
+                    individualId={this.props.individualId}
                     invalidate={this.invalidate}
+                    server={this.props.server}
                 />
             </div>
         );

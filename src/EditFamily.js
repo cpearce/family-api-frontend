@@ -8,8 +8,13 @@ export class FamiliesOfList extends Component {
         super(props);
         assertHasProps(props, [
             'addFamilyCallback',
-            'server',
+            'callbacks',
+            'deleteFamilyCallback',
+            'error',
+            'families',
             'individualId',
+            'invalidate',
+            'server',
         ]);
         this.addFamily = this.addFamily.bind(this);
     }
@@ -62,7 +67,16 @@ export class EditFamily extends Component {
     constructor(props) {
         super(props);
 
-        assertHasProps(props, ['family', 'deleteFamilyCallback', 'server']);
+        assertHasProps(props, [
+            'addFamilyCallback',
+            'callbacks',
+            'deleteFamilyCallback',
+            'error',
+            'families',
+            'individualId',
+            'invalidate',
+            'server',
+        ]);
         assertHasProps(props.family, ['id', 'spouse']);
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -133,7 +147,7 @@ export class EditFamily extends Component {
         if (!window.confirm(msg)) {
             return;
         }
-        this.props.deleteFamilyCallback(this.props.individualId);
+        this.props.deleteFamilyCallback(this.props.family.id);
     }
 
     async save() {
