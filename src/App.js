@@ -17,7 +17,9 @@ class App extends Component {
         this.state = {
             path: window.location.pathname,
             database: null,
-            canEdit: null,
+            username: "",
+            isStaff: false,
+            isEditor: false,
         };
 
         this.callbacks = {
@@ -54,7 +56,7 @@ class App extends Component {
     }
 
     isConnected() {
-        return this.state.canEdit !== null;
+        return this.state.username !== "";
     }
 
     async connect() {
@@ -64,8 +66,12 @@ class App extends Component {
             // Our stored token is still valid. Show the individuals list.
             console.log("conect() succeeded");
             console.log("username: " + account.username);
+            console.log("is_staff: " + account.is_staff);
+            console.log("is_editor: " + account.is_editor);
             this.setState({
                 username: account.username,
+                isStaff: account.is_staff,
+                isEditor: account.is_editor,
             });
             // Show search page after login.
             if (this.state.path === "/login") {
@@ -101,7 +107,14 @@ class App extends Component {
         try {
             await this.server.login(username, password);
             let account = await this.server.checkAccount();
-            this.navigate("Individuals", "/individuals", { username: account.username });
+            console.log("username: " + account.username);
+            console.log("is_staff: " + account.is_staff);
+            console.log("is_editor: " + account.is_editor);
+            this.navigate("Individuals", "/individuals", {
+                username: account.username,
+                isStaff: account.is_staff,
+                isEditor: account.is_editor,
+            });
         } catch (e) {
             this.error("Login Failed: " + e.message);
         } finally {
@@ -115,7 +128,11 @@ class App extends Component {
         console.log("logout");
         try {
             await this.server.logout();
-            this.navigate("Family Tree: Login", "/login", {canEdit: null});
+            this.navigate("Family Tree: Login", "/login", {
+                username: "",
+                isStaff: false,
+                isEditor: false,
+            });
         } catch (e) {
             this.error(e.message);
         }
@@ -135,10 +152,10 @@ class App extends Component {
 
     editCallback(individual) {
         console.log("edit " + individual.id);
-        if (this.state.canEdit) {
+        if ((this.state.isEditor && this.state.username === individual.owner) || this.state.isStaff) {
             this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
         } else {
-            this.error("Tried to edit, but you don't have edit privileges!");
+            this.error("Tried to edit, but you can only edit individuals you created!");
         }
     }
 
@@ -174,7 +191,8 @@ class App extends Component {
                 screen={this.state.screen}
                 callbacks={this.callbacks}
                 server={this.server}
-                canEdit={this.state.canEdit}
+                isStaff={this.state.isStaff}
+                isEditor={this.state.isEditor}
             />
         );
         console.log("App.render " + window.location.pathname);
@@ -230,7 +248,6 @@ class App extends Component {
                     <EditIndividual
                         server={this.server}
                         callbacks={this.callbacks}
-                        canEdit={this.state.canEdit}
                     />
                 </div>
             );
@@ -253,7 +270,9 @@ class App extends Component {
                             individualId={id}
                             server={this.server}
                             callbacks={this.callbacks}
-                            canEdit={this.state.canEdit}
+                            username={this.state.username}
+                            isStaff={this.state.isStaff}
+                            isEditor={this.state.isEditor}
                         />
                     </div>
                 );
@@ -269,6 +288,9 @@ class App extends Component {
                                 individualId={id}
                                 server={this.server}
                                 callbacks={this.callbacks}
+                                username={this.state.username}
+                                isStaff={this.state.isStaff}
+                                isEditor={this.state.isEditor}
                             />
                         </div>
                     );

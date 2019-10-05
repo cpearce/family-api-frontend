@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
+import { assertHasProps } from './Utils';
 
 export class Header extends Component {
     constructor(props) {
         super(props);
+        assertHasProps(props, ['isStaff', 'isEditor', 'callbacks']);
+        assertHasProps(props.callbacks, ['edit', 'error', 'search', 'logout']);
         this.addIndividual = this.addIndividual.bind(this);
     }
 
@@ -19,9 +22,10 @@ export class Header extends Component {
     render() {
         const isLoginPage = window.location.pathname === "/" ||
                             window.location.pathname === "/login";
+        const canEdit = this.props.isStaff || this.props.isEditor;
         const items = isLoginPage ? [] : [
-            { text: "Individuals", click: this.props.callbacks.search, path: "/individuals" },
-            ...(this.props.canEdit ? [{ text: "Add", click: this.addIndividual, path: "/individuals/add" }] : []),
+            { text: "Search Individuals", click: this.props.callbacks.search, path: "/individuals" },
+            ...(canEdit ? [{ text: "Add Individual", click: this.addIndividual, path: "/individuals/add" }] : []),
             { text: "Logout", click: this.props.callbacks.logout, path: "" },
         ];
 

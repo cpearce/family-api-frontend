@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {nameAndLifetimeOf} from './Utils.js';
+import {nameAndLifetimeOf, assertHasProps} from './Utils.js';
 
 
 function formatEvent(date, location) {
@@ -104,6 +104,8 @@ function formatParents(parents, detailCallback) {
 export class IndividualDetail extends Component {
     constructor(props) {
         super(props);
+        assertHasProps(props, ['username', 'isStaff', 'isEditor', 'server', 'callbacks']);
+        assertHasProps(props.callbacks, ['edit', 'error', 'detail', 'descendants', 'ancestors']);
         this.state = {
         };
         this.retrieving = false;
@@ -142,7 +144,9 @@ export class IndividualDetail extends Component {
         const death = formatEvent(individual.death_date, individual.death_location);
         const buried = formatEvent(individual.buried_date, individual.buried_location);
         const baptism = formatEvent(individual.baptism_date, individual.baptism_location);
-        const editButton = !this.props.canEdit ? null : (
+
+        const canEdit = this.props.isStaff || (this.props.isEditor && this.props.username === individual.owner);
+        const editButton = !canEdit  ? null : (
             <div>
                 <button onClick={() => this.props.callbacks.edit(individual)}>
                     Edit
