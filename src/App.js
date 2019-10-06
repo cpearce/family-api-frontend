@@ -17,6 +17,7 @@ class App extends Component {
         this.server = new ServerConnection();
 
         this.state = {
+            serverResponsive: false,
             account: null,
             path: window.location.pathname,
             database: null,
@@ -49,19 +50,37 @@ class App extends Component {
             window.history.pushState({}, "Family Tree: Login", this.state.path);
         }
 
-        // If we have a stored access token, test it, and download
-        // data. If we don't, or the token has expired, this will
-        // cause us to show a login page.
-        // Note: this is async, but we don't await its completion.
-        this.connect();
+        // Ping the server, to ensure it's awake. Heroku puts it to sleep
+        // after an hour of inactivity.
+        this.ensureServerResponsive();
+    }
+
+    async ensureServerResponsive() {
+        for (let attempts = 1; attempts <= 5; attempts++) {
+            try {
+                await this.server.ping();
+                this.setState({
+                    serverResponsive: true,
+                });
+                this.connect();
+                return;
+            } catch (e) {
+                console.log("Failed to ping server...")
+            }
+        }
     }
 
     isConnected() {
         return this.state.account !== null;
     }
 
+
     async connect() {
         console.log("App.connect()");
+        // If we have a stored access token, test it, and download
+        // data. If we don't, or the token has expired, this will
+        // cause us to show a login page.
+        // Note: this is async, but we don't await its completion.
         try {
             let account = await this.server.checkAccount();
             assertHasProps(account, ['username', 'is_staff', 'is_editor',
@@ -138,8 +157,8 @@ class App extends Component {
         }
     }
 
-    searchIndividuals() {
-        this.navigate("Individuals", "/individuals");
+    searchIndividuals(state) {
+        this.navigate("Individuals", "/individuals", state || {});
     }
 
     detailCallback(individual) {
@@ -201,6 +220,15 @@ class App extends Component {
             />
         );
         console.log("App.render " + window.location.pathname);
+
+        if (!this.state.serverResponsive) {
+            return (
+                <div>
+                    {header}
+                    Connecting to server...
+                </div>
+            );
+        }
 
         // URL: /error
         if (this.state.path === "/error") {
@@ -318,7 +346,7 @@ class App extends Component {
                 if (chunks[2] === "descendants") {
                     // URL: /individuals/$id/descendants
                     return (
-                        <div className="main">
+                        <div>
                             {header}
                             <Descendants
                                 individualId={id}
@@ -331,7 +359,7 @@ class App extends Component {
                 if (chunks[2] === "ancestors") {
                     // URL: /individuals/$id/ancestors
                     return (
-                        <div className="main">
+                        <div>
                             {header}
                             <Ancestors
                                 individualId={id}

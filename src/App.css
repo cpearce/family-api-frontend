@@ -70,7 +70,7 @@ rect.hover {
   margin-right: 0.5em;
 }
 
-.individual-detail, .edit-individual-detail, .account-information {
+.individual-detail, .edit-individual-detail, .account-information, .main {
   max-width: 50em;
   padding: 1em;
 }

@@ -65,6 +65,21 @@ export class ServerConnection {
         };
     }
 
+    async ping() {
+        const url = backend_server + "ping/";
+        const init = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+            cache: 'default',
+        };
+
+        let response = await fetch(url, init);
+        return response.status === 200;
+    }
+
     async login(username, password) {
         console.log("login u:" + username + " p:" + password);
         const url = backend_server + 'login/';
