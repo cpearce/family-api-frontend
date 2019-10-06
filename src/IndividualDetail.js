@@ -104,7 +104,9 @@ function formatParents(parents, detailCallback) {
 export class IndividualDetail extends Component {
     constructor(props) {
         super(props);
-        assertHasProps(props, ['username', 'isStaff', 'isEditor', 'server', 'callbacks']);
+        assertHasProps(props, ['account', 'server', 'callbacks']);
+        assertHasProps(props.account, ['is_staff', 'is_editor', 'username']);
+        assertHasProps(props.callbacks, ['account', 'edit', 'error', 'search', 'logout']);
         assertHasProps(props.callbacks, ['edit', 'error', 'detail', 'descendants', 'ancestors']);
         this.state = {
         };
@@ -145,7 +147,8 @@ export class IndividualDetail extends Component {
         const buried = formatEvent(individual.buried_date, individual.buried_location);
         const baptism = formatEvent(individual.baptism_date, individual.baptism_location);
 
-        const canEdit = this.props.isStaff || (this.props.isEditor && this.props.username === individual.owner);
+        const canEdit = this.props.account.is_staff ||
+            (this.props.account.is_editor && this.props.account.username === individual.owner);
         const editButton = !canEdit  ? null : (
             <div>
                 <button onClick={() => this.props.callbacks.edit(individual)}>

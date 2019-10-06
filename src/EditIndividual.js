@@ -27,7 +27,10 @@ const MUTABLE_FIELDS = [
 export class EditIndividual extends Component {
     constructor(props) {
         super(props);
-        assertHasProps(props, ['isStaff', 'isEditor', 'callbacks', 'server']);
+        assertHasProps(props, ['account', 'callbacks', 'server']);
+        assertHasProps(props.account, ['username', 'is_staff', 'is_editor',
+            'first_name', 'last_name', 'email']);
+        assertHasProps(props.callbacks, ['account', 'edit', 'error', 'search', 'logout']);
         assertHasProps(props.callbacks, ['edit', 'error', 'search', 'logout']);
         this.state = {
         };

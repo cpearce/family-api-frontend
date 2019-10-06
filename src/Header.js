@@ -4,8 +4,12 @@ import { assertHasProps } from './Utils';
 export class Header extends Component {
     constructor(props) {
         super(props);
-        assertHasProps(props, ['isStaff', 'isEditor', 'callbacks']);
-        assertHasProps(props.callbacks, ['edit', 'error', 'search', 'logout']);
+        assertHasProps(props, ['account', 'callbacks']);
+        if (props.account) {
+            assertHasProps(props.account, ['username', 'is_staff', 'is_editor',
+                'first_name', 'last_name', 'email']);
+        }
+        assertHasProps(props.callbacks, ['account', 'edit', 'error', 'search', 'logout']);
         this.addIndividual = this.addIndividual.bind(this);
     }
 
@@ -22,10 +26,12 @@ export class Header extends Component {
     render() {
         const isLoginPage = window.location.pathname === "/" ||
                             window.location.pathname === "/login";
-        const canEdit = this.props.isStaff || this.props.isEditor;
+        const canEdit = this.props.account &&
+            (this.props.account.is_staff || this.props.account.is_editor);
         const items = isLoginPage ? [] : [
             { text: "Search Individuals", click: this.props.callbacks.search, path: "/individuals" },
             ...(canEdit ? [{ text: "Add Individual", click: this.addIndividual, path: "/individuals/add" }] : []),
+            { text: 'Account', click: this.props.callbacks.account, path: "/account" },
             { text: "Logout", click: this.props.callbacks.logout, path: "" },
         ];
 

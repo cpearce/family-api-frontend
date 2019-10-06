@@ -1,5 +1,6 @@
 import { LoginBox } from './LoginBox.js';
 import React, { Component } from 'react';
+import { AccountInfo } from './AccountInfo.js';
 import { SearchIndividuals } from './Search.js';
 import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
@@ -7,6 +8,7 @@ import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
 import { Descendants, Ancestors } from './Descendants.js';
 import './App.css';
+import { assertHasProps } from './Utils.js';
 
 class App extends Component {
     constructor(props) {
@@ -15,14 +17,13 @@ class App extends Component {
         this.server = new ServerConnection();
 
         this.state = {
+            account: null,
             path: window.location.pathname,
             database: null,
-            username: "",
-            isStaff: false,
-            isEditor: false,
         };
 
         this.callbacks = {
+            account: this.accountInfoCallback.bind(this),
             logout: this.logout.bind(this),
             login: this.login.bind(this),
             search: this.searchIndividuals.bind(this),
@@ -56,22 +57,23 @@ class App extends Component {
     }
 
     isConnected() {
-        return this.state.username !== "";
+        return this.state.account !== null;
     }
 
     async connect() {
         console.log("App.connect()");
         try {
             let account = await this.server.checkAccount();
+            assertHasProps(account, ['username', 'is_staff', 'is_editor',
+                'first_name', 'last_name', 'email']);
+
             // Our stored token is still valid. Show the individuals list.
             console.log("conect() succeeded");
             console.log("username: " + account.username);
             console.log("is_staff: " + account.is_staff);
             console.log("is_editor: " + account.is_editor);
             this.setState({
-                username: account.username,
-                isStaff: account.is_staff,
-                isEditor: account.is_editor,
+                account: account,
             });
             // Show search page after login.
             if (this.state.path === "/login") {
@@ -107,13 +109,13 @@ class App extends Component {
         try {
             await this.server.login(username, password);
             let account = await this.server.checkAccount();
+            assertHasProps(account, ['username', 'is_staff', 'is_editor',
+                'first_name', 'last_name', 'email']);
             console.log("username: " + account.username);
             console.log("is_staff: " + account.is_staff);
             console.log("is_editor: " + account.is_editor);
             this.navigate("Individuals", "/individuals", {
-                username: account.username,
-                isStaff: account.is_staff,
-                isEditor: account.is_editor,
+                account: account,
             });
         } catch (e) {
             this.error("Login Failed: " + e.message);
@@ -129,9 +131,7 @@ class App extends Component {
         try {
             await this.server.logout();
             this.navigate("Family Tree: Login", "/login", {
-                username: "",
-                isStaff: false,
-                isEditor: false,
+                account: null,
             });
         } catch (e) {
             this.error(e.message);
@@ -152,11 +152,17 @@ class App extends Component {
 
     editCallback(individual) {
         console.log("edit " + individual.id);
-        if ((this.state.isEditor && this.state.username === individual.owner) || this.state.isStaff) {
+        if ((this.state.account.is_editor &&
+             this.state.account.username === individual.owner) ||
+            this.state.account.is_staff) {
             this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
         } else {
             this.error("Tried to edit, but you can only edit individuals you created!");
         }
+    }
+
+    accountInfoCallback() {
+        this.navigate("Account details", "/account");
     }
 
     ancestors(individual) {
@@ -191,8 +197,7 @@ class App extends Component {
                 screen={this.state.screen}
                 callbacks={this.callbacks}
                 server={this.server}
-                isStaff={this.state.isStaff}
-                isEditor={this.state.isEditor}
+                account={this.state.account}
             />
         );
         console.log("App.render " + window.location.pathname);
@@ -225,6 +230,14 @@ class App extends Component {
             }
         }
 
+        if (!this.isConnected()) {
+            return (
+                <div>
+                    Testing server connection...
+                </div>
+            );
+        }
+
         // URL: /individuals
         if (this.state.path === "/individuals") {
             return (
@@ -253,6 +266,17 @@ class App extends Component {
             );
         }
 
+        if (this.state.path === "/account") {
+            return (
+                <div>
+                    {header}
+                    <AccountInfo
+                        account={this.state.account}
+                    />
+                </div>
+            );
+        }
+
         const chunks = window.location.pathname.split("/").filter(nonNull);
         if (chunks.length >= 2 && chunks[0] === "individuals") {
             const id = parseInt(chunks[1]);
@@ -270,9 +294,7 @@ class App extends Component {
                             individualId={id}
                             server={this.server}
                             callbacks={this.callbacks}
-                            username={this.state.username}
-                            isStaff={this.state.isStaff}
-                            isEditor={this.state.isEditor}
+                            account={this.state.account}
                         />
                     </div>
                 );
@@ -288,9 +310,7 @@ class App extends Component {
                                 individualId={id}
                                 server={this.server}
                                 callbacks={this.callbacks}
-                                username={this.state.username}
-                                isStaff={this.state.isStaff}
-                                isEditor={this.state.isEditor}
+                                account={this.state.account}
                             />
                         </div>
                     );
