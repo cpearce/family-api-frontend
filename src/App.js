@@ -8,6 +8,7 @@ import { EditIndividual } from './EditIndividual.js';
 import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
 import { Descendants, Ancestors } from './Descendants.js';
+import { ConfirmAccount } from './ConfirmAccount.js';
 import './App.css';
 import { assertHasProps } from './Utils.js';
 
@@ -389,6 +390,20 @@ class App extends Component {
                     );
                 }
             }
+        }
+
+        if (chunks.length === 2 && chunks[0] === "confirm-account") {
+            // URL: /confirm-account/$token
+            return (
+                <div>
+                    {header}
+                    <ConfirmAccount
+                        token={chunks[1]}
+                        callbacks={this.callbacks}
+                        server={this.server}
+                    />
+                </div>
+            );
         }
 
         // Not a valid route, error!

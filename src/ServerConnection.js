@@ -423,4 +423,26 @@ export class ServerConnection {
         }
         return await response.json();
     }
+
+    async resetPassword(data) {
+        assertHasProps(data, ['token', 'password']);
+        let method = "POST";
+        const url = backend_server + "reset-password/";
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+            body: JSON.stringify(data),
+        };
+        let response = await fetch(url, init);
+        console.log("Confirm account response: " + response.status);
+        if (!response.status >= 500) {
+            throw new Error("Error on request account confirmation; code " + response.status);
+        }
+        return await response.json();
+    }
 }
