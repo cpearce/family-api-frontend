@@ -1,3 +1,5 @@
+import { assertHasProps } from "./Utils";
+
 // If the REACT_APP_BACKEND environment variable was set a build time, use that
 // as the URL of our backend server, otherwise point to Heroku.
 const backend_server =
@@ -401,4 +403,24 @@ export class ServerConnection {
         return await response.json();
     }
 
+    async createAccount(data) {
+        assertHasProps(data, ['username', 'email', 'first_name', 'last_name']);
+        let method = "POST";
+        const url = backend_server + "create-account/";
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Token ' + this.token,
+            },
+            mode: 'cors',
+            cache: 'default',
+            body: JSON.stringify(data),
+        };
+        let response = await fetch(url, init);
+        if (response.status >= 500) {
+            throw new Error("Internal server error on request account creation; code " + response.status);
+        }
+        return await response.json();
+    }
 }

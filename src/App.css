@@ -177,3 +177,12 @@ button.searchResult {
   padding: 0.5em;
   margin-top: 0.5em;
 }
+
+input[type="email"]:invalid {
+  box-shadow: red 0px 0px 5px;
+}
+
+.error-text {
+  color: red;
+  font-weight: bold;
+}

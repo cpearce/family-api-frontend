@@ -1,6 +1,7 @@
 import { LoginBox } from './LoginBox.js';
 import React, { Component } from 'react';
 import { AccountInfo } from './AccountInfo.js';
+import { CreateAccount } from './CreateAccount.js';
 import { SearchIndividuals } from './Search.js';
 import { IndividualDetail } from './IndividualDetail.js';
 import { EditIndividual } from './EditIndividual.js';
@@ -25,6 +26,7 @@ class App extends Component {
 
         this.callbacks = {
             account: this.accountInfoCallback.bind(this),
+            createAccount: this.createAccountCallback.bind(this),
             logout: this.logout.bind(this),
             login: this.login.bind(this),
             search: this.searchIndividuals.bind(this),
@@ -180,6 +182,10 @@ class App extends Component {
         }
     }
 
+    createAccountCallback() {
+        this.navigate("Create account", "/create-account");
+    }
+
     accountInfoCallback() {
         this.navigate("Account details", "/account");
     }
@@ -300,6 +306,19 @@ class App extends Component {
                     {header}
                     <AccountInfo
                         account={this.state.account}
+                        callbacks={this.callbacks}
+                    />
+                </div>
+            );
+        }
+
+        if (this.state.path === "/create-account") {
+            return (
+                <div>
+                    {header}
+                    <CreateAccount
+                        callbacks={this.callbacks}
+                        server={this.server}
                     />
                 </div>
             );
