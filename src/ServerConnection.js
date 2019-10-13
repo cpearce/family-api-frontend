@@ -432,7 +432,6 @@ export class ServerConnection {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Token ' + this.token,
             },
             mode: 'cors',
             cache: 'default',
@@ -444,5 +443,24 @@ export class ServerConnection {
             throw new Error("Error on request account confirmation; code " + response.status);
         }
         return await response.json();
+    }
+
+    // Requests to reset the login; given an email address, email us
+    // username and a link to reset password.
+    async requestAccountRecovery(email) {
+        let method = "POST";
+        const url = backend_server + "recover-account/";
+        const init = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+            cache: 'default',
+            body: JSON.stringify({email: email}),
+        };
+        let response = await fetch(url, init);
+        console.log("Confirm account response: " + response.status);
+        return response.ok;
     }
 }

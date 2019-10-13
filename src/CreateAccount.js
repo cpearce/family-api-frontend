@@ -47,7 +47,7 @@ export class CreateAccount extends Component {
                             <td>
                                 <input
                                     type="text"
-                                    value={this.username}
+                                    value={this.state.username}
                                     id="username"
                                     onChange={this.handleInputChange}
                                 />
@@ -58,7 +58,7 @@ export class CreateAccount extends Component {
                             <td>
                                 <input
                                     type="text"
-                                    value={this.first_name}
+                                    value={this.state.first_name}
                                     id="first_name"
                                     onChange={this.handleInputChange}
                                 />
@@ -69,7 +69,7 @@ export class CreateAccount extends Component {
                             <td>
                                 <input
                                     type="text"
-                                    value={this.last_name}
+                                    value={this.state.last_name}
                                     id="last_name"
                                     onChange={this.handleInputChange}
                                 />
@@ -80,7 +80,7 @@ export class CreateAccount extends Component {
                             <td>
                                 <input
                                     type="email"
-                                    value={this.email}
+                                    value={this.state.email}
                                     id="email"
                                     onChange={this.handleInputChange}
                                 />

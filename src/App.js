@@ -8,7 +8,8 @@ import { EditIndividual } from './EditIndividual.js';
 import { Header } from './Header.js';
 import { ServerConnection } from './ServerConnection.js';
 import { Descendants, Ancestors } from './Descendants.js';
-import { ConfirmAccount } from './ConfirmAccount.js';
+import { ConfirmAccount, ResetLogin } from './ConfirmAccount.js';
+import { ForgotLogin } from './ForgotLogin.js';
 import './App.css';
 import { assertHasProps } from './Utils.js';
 
@@ -104,9 +105,18 @@ class App extends Component {
         } catch (e) {
             // Stored token must have not worked. We should show a login page.
             console.log("Initial connect failed. Error=" + e.message);
-            this.navigate("Family Tree", "/login");
+            if (!this.isLoggedOutPath()) {
+                this.navigate("Family Tree", "/login");
+            }
             return;
         }
+    }
+
+    isLoggedOutPath() {
+        const chunks = window.location.pathname.split("/").filter(nonNull);
+        return chunks[0] === 'recover-account' ||
+            chunks[0] === 'confirm-account' ||
+            chunks[0] === 'reset-password';
     }
 
     error(e) {
@@ -216,7 +226,13 @@ class App extends Component {
         });
     }
 
+    forgotPassword() {
+        this.navigate("Forgot password", "/forgot-login", {});
+    }
+
     render() {
+        const chunks = window.location.pathname.split("/").filter(nonNull);
+
         const header = (
             <Header
                 path={this.state.path}
@@ -259,10 +275,50 @@ class App extends Component {
                         {header}
                         <LoginBox
                             login={this.callbacks.login}
+                            forgotPassword={this.forgotPassword.bind(this)}
                         />
                     </div>
                 );
             }
+        }
+
+        if (this.state.path === "/forgot-login") {
+            return (
+                <div>
+                    {header}
+                    <ForgotLogin
+                        server={this.server}
+                    />
+                </div>
+            );
+        }
+
+        if (chunks.length === 2 && chunks[0] === "reset-password") {
+            // URL: /reset-password/$token
+            return (
+                <div>
+                    {header}
+                    <ResetLogin
+                        callbacks={this.callbacks}
+                        server={this.server}
+                        token={chunks[1]}
+                    />
+                </div>
+            );
+        }
+
+        if (chunks.length === 2 && chunks[0] === "confirm-account") {
+            // URL: /confirm-account/$token
+            return (
+                <div>
+                    {header}
+                    <ConfirmAccount
+                        token={chunks[1]}
+                        callbacks={this.callbacks}
+                        server={this.server}
+                    />
+                </div>
+            );
         }
 
         if (!this.isConnected()) {
@@ -325,7 +381,6 @@ class App extends Component {
             );
         }
 
-        const chunks = window.location.pathname.split("/").filter(nonNull);
         if (chunks.length >= 2 && chunks[0] === "individuals") {
             const id = parseInt(chunks[1]);
             if (isNaN(id)) {
@@ -390,20 +445,6 @@ class App extends Component {
                     );
                 }
             }
-        }
-
-        if (chunks.length === 2 && chunks[0] === "confirm-account") {
-            // URL: /confirm-account/$token
-            return (
-                <div>
-                    {header}
-                    <ConfirmAccount
-                        token={chunks[1]}
-                        callbacks={this.callbacks}
-                        server={this.server}
-                    />
-                </div>
-            );
         }
 
         // Not a valid route, error!

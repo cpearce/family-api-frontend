@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import { assertHasProps } from './Utils';
 
-export class ConfirmAccount extends Component {
-
+export class ResetPassword extends Component {
     constructor(props) {
         super(props);
         assertHasProps(props, ['callbacks', 'server', 'token']);
@@ -30,8 +29,6 @@ export class ConfirmAccount extends Component {
         ) : null;
         return (
             <div>
-                <p>To complete account creation, set a password.</p>
-                <p>Passwords must be at least 10 characters long.</p>
                 <table>
                     <tbody>
                         <tr>
@@ -59,7 +56,7 @@ export class ConfirmAccount extends Component {
                         {maybeErrors}
                     </tbody>
                 </table>
-                <button onClick={this.submit} disabled={!this.canSubmit()}>Confirm Account</button>
+                <button onClick={this.submit} disabled={!this.canSubmit()}>Set Password</button>
             </div>
         );
     }
@@ -109,5 +106,37 @@ export class ConfirmAccount extends Component {
         this.setState({
             [event.target.id]: event.target.value
         });
+    }
+
+}
+export class ConfirmAccount extends Component {
+
+    render() {
+        return (
+            <div>
+                <p>To complete account creation, set a password.</p>
+                <p>Passwords must be at least 10 characters long.</p>
+                <ResetPassword
+                    callbacks={this.props.callbacks}
+                    server={this.props.server}
+                    token={this.props.token}
+                />
+            </div>
+        )
+    }
+}
+
+export class ResetLogin extends Component {
+    render() {
+        return (
+            <div>
+                Set a new password.
+                <ResetPassword
+                    callbacks={this.props.callbacks}
+                    server={this.props.server}
+                    token={this.props.token}
+                />
+            </div>
+        );
     }
 }

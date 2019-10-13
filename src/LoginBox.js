@@ -58,6 +58,11 @@ export class LoginBox extends Component {
                         </tbody>
                     </table>
                 </form>
+                <div>
+                    <button className="fake-link" onClick={this.props.forgotPassword}>
+                        Forgot username/password
+                    </button>
+                </div>
             </div>
         );
     }

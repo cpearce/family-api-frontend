@@ -24,8 +24,7 @@ export class Header extends Component {
     }
 
     render() {
-        const isLoginPage = window.location.pathname === "/" ||
-                            window.location.pathname === "/login";
+        const isLoginPage = this.props.account === null;
         const canEdit = this.props.account &&
             (this.props.account.is_staff || this.props.account.is_editor);
         const items = isLoginPage ? [] : [
