@@ -27,6 +27,7 @@ export class Header extends Component {
         const isLoginPage = this.props.account === null;
         const canEdit = this.props.account &&
             (this.props.account.is_staff || this.props.account.is_editor);
+        const isAdding = this.props.path.match('individuals/.*/edit');
         const items = isLoginPage ? [] : [
             {
                 text: "Search Individuals",
@@ -34,9 +35,9 @@ export class Header extends Component {
                 disabled: this.props.path === "individuals",
             },
             ...(canEdit ? [{
-                text: "Add Individual",
+                text: !isAdding ? "Add Individual" : "Add another individual",
                 click: this.addIndividual,
-                disabled: this.props.path.match('individuals/.*/edit'),
+                disabled: false,
             }] : []),
             {
                 text: 'Account',
