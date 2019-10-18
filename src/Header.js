@@ -28,17 +28,33 @@ export class Header extends Component {
         const canEdit = this.props.account &&
             (this.props.account.is_staff || this.props.account.is_editor);
         const items = isLoginPage ? [] : [
-            { text: "Search Individuals", click: this.props.callbacks.search, path: "individuals" },
-            ...(canEdit ? [{ text: "Add Individual", click: this.addIndividual, path: "individuals/add" }] : []),
-            { text: 'Account', click: this.props.callbacks.account, path: "account" },
-            { text: "Logout", click: this.props.callbacks.logout, path: "" },
+            {
+                text: "Search Individuals",
+                click: this.props.callbacks.search,
+                disabled: this.props.path === "individuals",
+            },
+            ...(canEdit ? [{
+                text: "Add Individual",
+                click: this.addIndividual,
+                disabled: this.props.path.match('individuals/.*/edit'),
+            }] : []),
+            {
+                text: 'Account',
+                click: this.props.callbacks.account,
+                disabled: this.props.path === "account",
+            },
+            {
+                text: "Logout",
+                click: this.props.callbacks.logout,
+                disabled: this.props.path === "",
+            },
         ];
 
         const navBarItems = items.map(
             (item) => (
                 <li key={"navbar-" + item.text} className="nav-item">
                     <button
-                        disabled={(item.path === this.props.path)}
+                        disabled={item.disabled}
                         className="nav-button"
                         onClick={item.click}
                     >
