@@ -22,7 +22,7 @@ class App extends Component {
         this.state = {
             serverResponsive: false,
             account: null,
-            path: window.location.pathname,
+            path: window.location.hash.replace("#", ''),
             database: null,
         };
 
@@ -41,17 +41,17 @@ class App extends Component {
 
         window.addEventListener("popstate", ((e) => {
             this.setState({
-                path: window.location.pathname
+                path: window.location.hash.replace("#", ''),
             });
         }));
 
         // Ensure we start at the login screen.
-        if (this.state.path === "/") {
+        if (this.state.path === "") {
             // Note: We can't call our navigate() function here, as it calls
             // setState(), which won't work in a constructor as we're not
             // mounted yet.
-            this.state.path = "/login";
-            window.history.pushState({}, "Family Tree: Login", this.state.path);
+            this.state.path = "login";
+            window.history.pushState({}, "Family Tree: Login", "#" + this.state.path);
         }
 
         // Ping the server, to ensure it's awake. Heroku puts it to sleep
@@ -99,21 +99,21 @@ class App extends Component {
                 account: account,
             });
             // Show search page after login.
-            if (this.state.path === "/login") {
+            if (this.state.path === "login") {
                 this.searchIndividuals();
             }
         } catch (e) {
             // Stored token must have not worked. We should show a login page.
             console.log("Initial connect failed. Error=" + e.message);
             if (!this.isLoggedOutPath()) {
-                this.navigate("Family Tree", "/login");
+                this.navigate("Family Tree", "login");
             }
             return;
         }
     }
 
     isLoggedOutPath() {
-        const chunks = window.location.pathname.split("/").filter(nonNull);
+        const chunks = this.state.path.split("/").filter(nonNull);
         return chunks[0] === 'recover-account' ||
             chunks[0] === 'confirm-account' ||
             chunks[0] === 'reset-password';
@@ -146,7 +146,7 @@ class App extends Component {
             console.log("username: " + account.username);
             console.log("is_staff: " + account.is_staff);
             console.log("is_editor: " + account.is_editor);
-            this.navigate("Individuals", "/individuals", {
+            this.navigate("Individuals", "individuals", {
                 account: account,
             });
         } catch (e) {
@@ -162,7 +162,7 @@ class App extends Component {
         console.log("logout");
         try {
             await this.server.logout();
-            this.navigate("Family Tree: Login", "/login", {
+            this.navigate("Family Tree: Login", "login", {
                 account: null,
             });
         } catch (e) {
@@ -171,7 +171,7 @@ class App extends Component {
     }
 
     searchIndividuals(state) {
-        this.navigate("Individuals", "/individuals", state || {});
+        this.navigate("Individuals", "individuals", state || {});
     }
 
     detailCallback(individual) {
@@ -179,7 +179,7 @@ class App extends Component {
             console.log("Error: detailCallback called with null individual.");
             return;
         }
-        this.navigate("Individual detail", "/individuals/" + individual.id);
+        this.navigate("Individual detail", "individuals/" + individual.id);
     }
 
     editCallback(individual) {
@@ -187,18 +187,18 @@ class App extends Component {
         if ((this.state.account.is_editor &&
              this.state.account.username === individual.owner) ||
             this.state.account.is_staff) {
-            this.navigate("Edit Individual", "/individuals/" + individual.id + "/edit");
+            this.navigate("Edit Individual", "individuals/" + individual.id + "/edit");
         } else {
             this.error("Tried to edit, but you can only edit individuals you created!");
         }
     }
 
     createAccountCallback() {
-        this.navigate("Create account", "/create-account");
+        this.navigate("Create account", "create-account");
     }
 
     accountInfoCallback() {
-        this.navigate("Account details", "/account");
+        this.navigate("Account details", "account");
     }
 
     ancestors(individual) {
@@ -206,7 +206,7 @@ class App extends Component {
             console.log("Error: ancestors called with null individual.");
             return;
         }
-        this.navigate("Individual ancestors", "/individuals/" + individual.id + "/ancestors");
+        this.navigate("Individual ancestors", "individuals/" + individual.id + "/ancestors");
     }
 
     descendants(individual) {
@@ -214,35 +214,35 @@ class App extends Component {
             console.log("Error: descendants called with null individual.");
             return;
         }
-        this.navigate("Individual descendants", "/individuals/" + individual.id + "/descendants");
+        this.navigate("Individual descendants", "individuals/" + individual.id + "/descendants");
     }
 
     navigate(title, path, otherState={}) {
         console.log("Navigate " + path);
-        window.history.pushState({}, title, path);
+        window.history.pushState({}, title, "#" + path);
         this.setState({
             ...otherState,
-            path: path
+            path: window.location.hash.replace("#", ''),
+
         });
     }
 
     forgotPassword() {
-        this.navigate("Forgot password", "/forgot-login", {});
+        this.navigate("Forgot password", "forgot-login", {});
     }
 
     render() {
-        const chunks = window.location.pathname.split("/").filter(nonNull);
+        const chunks = this.state.path.split("/").filter(nonNull);
 
         const header = (
             <Header
                 path={this.state.path}
-                screen={this.state.screen}
                 callbacks={this.callbacks}
                 server={this.server}
                 account={this.state.account}
             />
         );
-        console.log("App.render " + window.location.pathname);
+        console.log("App.render " + this.state.path);
 
         if (!this.state.serverResponsive) {
             return (
@@ -254,7 +254,7 @@ class App extends Component {
         }
 
         // URL: /error
-        if (this.state.path === "/error") {
+        if (this.state.path === "error") {
             return (
                 <div>
                     Error; {this.state.error}
@@ -263,7 +263,7 @@ class App extends Component {
         }
 
         // URL: /login
-        if (this.state.path === "/login") {
+        if (this.state.path === "login") {
             if (this.state.loginInProgress) {
                 return (
                     <div>Logging in...</div>
@@ -282,7 +282,7 @@ class App extends Component {
             }
         }
 
-        if (this.state.path === "/forgot-login") {
+        if (this.state.path === "forgot-login") {
             return (
                 <div>
                     {header}
@@ -294,7 +294,7 @@ class App extends Component {
         }
 
         if (chunks.length === 2 && chunks[0] === "reset-password") {
-            // URL: /reset-password/$token
+            // URL: reset-password/$token
             return (
                 <div>
                     {header}
@@ -308,7 +308,7 @@ class App extends Component {
         }
 
         if (chunks.length === 2 && chunks[0] === "confirm-account") {
-            // URL: /confirm-account/$token
+            // URL: confirm-account/$token
             return (
                 <div>
                     {header}
@@ -329,8 +329,8 @@ class App extends Component {
             );
         }
 
-        // URL: /individuals
-        if (this.state.path === "/individuals") {
+        // URL: individuals
+        if (this.state.path === "individuals") {
             return (
                 <div>
                     {header}
@@ -344,8 +344,8 @@ class App extends Component {
             );
         }
 
-        // URL: /individuals/add
-        if (this.state.path === "/individuals/add") {
+        // URL: individuals/add
+        if (this.state.path === "individuals/add") {
             return (
                 <div>
                     {header}
@@ -357,7 +357,7 @@ class App extends Component {
             );
         }
 
-        if (this.state.path === "/account") {
+        if (this.state.path === "account") {
             return (
                 <div>
                     {header}
@@ -369,7 +369,7 @@ class App extends Component {
             );
         }
 
-        if (this.state.path === "/create-account") {
+        if (this.state.path === "create-account") {
             return (
                 <div>
                     {header}
@@ -389,7 +389,7 @@ class App extends Component {
                 );
             }
             if (chunks.length === 2) {
-                // URL: /individuals/$id
+                // URL: individuals/$id
                 return (
                     <div>
                         {header}
@@ -405,7 +405,7 @@ class App extends Component {
 
             if (chunks.length === 3) {
                 if (chunks[2] === "edit") {
-                    // URL: /individuals/$id/edit
+                    // URL: individuals/$id/edit
                     return (
                         <div>
                             {header}
@@ -419,7 +419,7 @@ class App extends Component {
                     );
                 }
                 if (chunks[2] === "descendants") {
-                    // URL: /individuals/$id/descendants
+                    // URL: individuals/$id/descendants
                     return (
                         <div>
                             {header}
@@ -432,7 +432,7 @@ class App extends Component {
                     );
                 }
                 if (chunks[2] === "ancestors") {
-                    // URL: /individuals/$id/ancestors
+                    // URL: individuals/$id/ancestors
                     return (
                         <div>
                             {header}

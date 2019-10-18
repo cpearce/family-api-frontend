@@ -4,7 +4,7 @@ import { assertHasProps } from './Utils';
 export class Header extends Component {
     constructor(props) {
         super(props);
-        assertHasProps(props, ['account', 'callbacks']);
+        assertHasProps(props, ['account', 'callbacks', 'path']);
         if (props.account) {
             assertHasProps(props.account, ['username', 'is_staff', 'is_editor',
                 'first_name', 'last_name', 'email']);
@@ -28,9 +28,9 @@ export class Header extends Component {
         const canEdit = this.props.account &&
             (this.props.account.is_staff || this.props.account.is_editor);
         const items = isLoginPage ? [] : [
-            { text: "Search Individuals", click: this.props.callbacks.search, path: "/individuals" },
-            ...(canEdit ? [{ text: "Add Individual", click: this.addIndividual, path: "/individuals/add" }] : []),
-            { text: 'Account', click: this.props.callbacks.account, path: "/account" },
+            { text: "Search Individuals", click: this.props.callbacks.search, path: "individuals" },
+            ...(canEdit ? [{ text: "Add Individual", click: this.addIndividual, path: "individuals/add" }] : []),
+            { text: 'Account', click: this.props.callbacks.account, path: "account" },
             { text: "Logout", click: this.props.callbacks.logout, path: "" },
         ];
 
@@ -38,7 +38,7 @@ export class Header extends Component {
             (item) => (
                 <li key={"navbar-" + item.text} className="nav-item">
                     <button
-                        disabled={(item.path === window.location.pathname)}
+                        disabled={(item.path === this.props.path)}
                         className="nav-button"
                         onClick={item.click}
                     >
