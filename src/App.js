@@ -20,7 +20,6 @@ class App extends Component {
         this.server = new ServerConnection();
 
         this.state = {
-            serverResponsive: false,
             account: null,
             path: window.location.hash.replace("#", ''),
             database: null,
@@ -54,30 +53,12 @@ class App extends Component {
             window.history.pushState({}, "Family Tree: Login", "#" + this.state.path);
         }
 
-        // Ping the server, to ensure it's awake. Heroku puts it to sleep
-        // after an hour of inactivity.
-        this.ensureServerResponsive();
-    }
-
-    async ensureServerResponsive() {
-        for (let attempts = 1; attempts <= 5; attempts++) {
-            try {
-                await this.server.ping();
-                this.setState({
-                    serverResponsive: true,
-                });
-                this.connect();
-                return;
-            } catch (e) {
-                console.log("Failed to ping server...")
-            }
-        }
+        this.connect();
     }
 
     isConnected() {
         return this.state.account !== null;
     }
-
 
     async connect() {
         console.log("App.connect()");
@@ -243,15 +224,6 @@ class App extends Component {
             />
         );
         console.log("App.render " + this.state.path);
-
-        if (!this.state.serverResponsive) {
-            return (
-                <div>
-                    {header}
-                    Connecting to server...
-                </div>
-            );
-        }
 
         // URL: /error
         if (this.state.path === "error") {
