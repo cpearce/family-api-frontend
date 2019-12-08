@@ -16,7 +16,7 @@ export class AccountInfo extends Component {
                 <tr>
                     <td colSpan="2">
                         <p>
-                            With the shared account can view records, but cannot make changes.
+                            With the shared account you can view records, but cannot make changes.
                         </p>
                         <p>
                             If you want to add records for you or your family, feel free
