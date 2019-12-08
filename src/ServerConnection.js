@@ -1,9 +1,13 @@
 import { assertHasProps } from "./Utils";
 
+// We need the URL of the backend server.
+if (!process.env.REACT_APP_BACKEND) {
+    throw new Error("Must specify REACT_APP_BACKEND environment variable");
+}
+
 // If the REACT_APP_BACKEND environment variable was set a build time, use that
 // as the URL of our backend server, otherwise point to Heroku.
-const backend_server =
-    process.env.REACT_APP_BACKEND || "https://guarded-lowlands-11681.herokuapp.com/api/v1/";
+const backend_server = process.env.REACT_APP_BACKEND;
 const FAMILIES_URL = backend_server + 'families/';
 const INDIVIDUALS_URL = backend_server + 'individuals/';
 const AUTH_TOKEN = "authToken";
