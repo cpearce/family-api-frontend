@@ -1,6 +1,6 @@
 {
   "name": "familytree-frontend",
-  "homepage" : "https://ancestry.pearce.org.nz/",
+  "homepage": "https://ancestry.pearce.org.nz/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
