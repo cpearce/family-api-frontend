@@ -153,14 +153,10 @@ export class EditIndividual extends Component {
             data[field] = this.state[field];
         }
 
-        // Django Rest Framework's serializers expect empty dates to be
+        // Django Rest Framework's serializers expect values to be
         // "null", rather than an empty string.
-        const nullableFields = [
-            'id', 'child_in_family_id'
-        ];
-        for (let field of nullableFields) {
-            data[field] = this.state[field] || null;
-        }
+        data.id = this.state.id || null;
+        data.child_in_family = this.state.child_in_family_id || null;
 
         // The 'sex' field is either 'M', 'F', or '?'.
         data.sex = this.state.sex;
