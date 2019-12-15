@@ -15,13 +15,27 @@ export function lifetimeOf(individual) {
     return lifetime(individual);
 }
 
+export function getYear(date) {
+    if (!date) {
+        return null;
+    }
+    // All runs of digits, filtered to extact those of 4-digit length.
+    const matches = Array.from(
+        date.matchAll(/(\d+)/g), x => x[0])
+            .filter(x => x.length === 4);
+    for (const match of matches) {
+        return parseInt(match);
+    }
+    return null;
+}
+
 //TODO: USe 1 consistently!
 export function lifetime(individual) {
     if (!individual || (!individual.birth_date && !individual.death_date)) {
         return "";
     }
-    const birth = individual.birth_date ? (new Date(individual.birth_date).getFullYear()) : "?";
-    const death = individual.death_date ? (new Date(individual.death_date).getFullYear()) : "?";
+    const birth = getYear(individual.birth_date) || "?";
+    const death = getYear(individual.death_date) || "?";
     return "(" + birth + " - " + death + ")";
 }
 

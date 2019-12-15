@@ -137,9 +137,13 @@ export class EditIndividual extends Component {
         const stringFields = [
             'first_names',
             'last_name',
+            'birth_date',
             'birth_location',
+            'death_date',
             'death_location',
+            'buried_date',
             'buried_location',
+            'baptism_date',
             'baptism_location',
             'occupation',
             'note',
@@ -152,8 +156,7 @@ export class EditIndividual extends Component {
         // Django Rest Framework's serializers expect empty dates to be
         // "null", rather than an empty string.
         const nullableFields = [
-            'id', 'birth_date', 'death_date',
-            'buried_date', 'baptism_date', 'child_in_family_id'
+            'id', 'child_in_family_id'
         ];
         for (let field of nullableFields) {
             data[field] = this.state[field] || null;
@@ -265,13 +268,13 @@ export class EditIndividual extends Component {
             ["Last Name", htmlInput("last_name", "text")],
             ["First Names", htmlInput("first_names", "text")],
             ["Sex", sexHtml],
-            ["Birth Date", htmlInput("birth_date", "date")],
+            ["Birth Date", htmlInput("birth_date", "text")],
             ["Birth Location", htmlInput("birth_location", "text")],
-            ["Death Date", htmlInput("death_date", "date")],
+            ["Death Date", htmlInput("death_date", "text")],
             ["Death Location", htmlInput("death_location", "text")],
-            ["Buried Date", htmlInput("buried_date", "date")],
+            ["Buried Date", htmlInput("buried_date", "text")],
             ["Buried Location", htmlInput("buried_location", "text")],
-            ["Baptism Date", htmlInput("baptism_date", "date")],
+            ["Baptism Date", htmlInput("baptism_date", "text")],
             ["Baptism Location", htmlInput("baptism_location", "text")],
             ["Occupation", htmlInput("occupation", "text")],
             ["Child Of", childOf]

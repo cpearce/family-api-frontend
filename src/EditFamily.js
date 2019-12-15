@@ -159,7 +159,7 @@ export class EditFamily extends Component {
         const children = this.state.children.map(i => i.id);
         let data = {
             id: this.props.family.id,
-            married_date: this.state.married_date || null,
+            married_date: this.state.married_date || "",
             married_location: this.state.married_location || "",
             partners: partners,
             children: children || [],
@@ -240,7 +240,7 @@ export class EditFamily extends Component {
         // [label, input]
         const fields = [
             ["Partner", partnerSelect],
-            ["Married Date", htmlInput("married_date", "date")],
+            ["Married Date", htmlInput("married_date", "text")],
             ["Married Location", htmlInput("married_location", "text")],
         ];
 
