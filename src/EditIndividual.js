@@ -20,7 +20,7 @@ const MUTABLE_FIELDS = [
     'baptism_location',
     'occupation',
     'note',
-    'child_in_family_id',
+    'child_in_family',
     'parents_family',
 ];
 
@@ -74,7 +74,7 @@ export class EditIndividual extends Component {
                 baptism_location: individual.baptism_location || "",
                 occupation: individual.occupation || "",
                 note: individual.note || "",
-                child_in_family_id: individual.child_in_family_id || 0,
+                child_in_family: individual.child_in_family || 0,
                 parents_family: data.parents_family || null,
                 base: {
                 }
@@ -156,7 +156,7 @@ export class EditIndividual extends Component {
         // Django Rest Framework's serializers expect values to be
         // "null", rather than an empty string.
         data.id = this.state.id || null;
-        data.child_in_family = this.state.child_in_family_id || null;
+        data.child_in_family = this.state.child_in_family || null;
 
         // The 'sex' field is either 'M', 'F', or '?'.
         data.sex = this.state.sex;
@@ -203,7 +203,7 @@ export class EditIndividual extends Component {
 
     async setChildOfFamily(family) {
         this.setState((state, props) => {
-            state.child_in_family_id = family.id;
+            state.child_in_family = family.id;
             state.parents_family = family;
             return state;
         });
