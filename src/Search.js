@@ -22,7 +22,8 @@ class Search extends Component {
         }
         this.state = {
             query: "",
-            results: [],
+            results: null,
+            searching: false,
         };
         this.handleQueryChange = this.handleQueryChange.bind(this);
         this.searchCount = 0;
@@ -32,7 +33,9 @@ class Search extends Component {
     handleQueryChange(event) {
         console.log("handleQueryChange");
         this.setState({
-            [event.target.name]: event.target.value
+            [event.target.name]: event.target.value,
+            searching: true,
+            results: null,
         });
         if (this.timeout) {
             clearTimeout(this.timeout);
@@ -68,16 +71,34 @@ class Search extends Component {
             }
             this.setState({
                 results: results,
+                searching: false,
             })
         } catch (e) {
             this.props.callback.error(e.message);
         }
     }
 
-    render() {
-        const searchResults = this.state.results.map(
-           (i) => this.massage(i, this.props.selectedCallback)
+    searchResults() {
+        if (this.state.searching) {
+            return (<div>Searching...</div>);
+        }
+        if (this.state.results === null) {
+            return "";
+        }
+        if (this.state.results.length === 0) {
+            return (<div>No results found.</div>);
+        }
+        const results = this.state.results.map(
+            (i) => this.massage(i, this.props.selectedCallback)
         );
+        return (
+            <div>
+                <ul>{results}</ul>
+            </div>
+        );
+    }
+
+    render() {
         const cancelButton = this.props.cancelButtonCallback && this.props.cancelButtonText
             ? (
                 <button onClick={this.props.cancelButtonCallback}>{this.props.cancelButtonText}</button>
@@ -94,7 +115,7 @@ class Search extends Component {
                     onChange={this.handleQueryChange}
                 />
                 {cancelButton}
-                <ul>{searchResults}</ul>
+                {this.searchResults()}
             </div>
         );
     }
